@@ -46,6 +46,12 @@ And then it's simpel as running
 go build
 ```
 
+Cross compile:
+
+```bash
+docker run -ti --rm -v "$(pwd)":/gopath/src/clair-scanner -w /gopath/src/clair-scanner tcnksm/gox:1.7
+```
+
 ## Run
 
 Example of a container scan, start Clair:
