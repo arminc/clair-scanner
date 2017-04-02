@@ -45,3 +45,40 @@ And then it's simpel as running
 ```bash
 go build
 ```
+
+## Run
+
+Example of a container scan, start Clair:
+
+```bash
+docker run -p 5432:5432 -d --name db arminc/clair-db:2017-04-01
+docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair:v2.0.0-rc.0
+```
+
+Now scan a container, that has a whitelisted CVE:
+
+```bash
+clair-scanner nginx:1.11.6-alpine example-nginx.yaml http://YOUR_LOCAL_IP:6060 YOUR_LOCAL_IP
+```
+
+Or a container that does not have a whitelisted CVE:
+
+```bash
+clair-scanner nginx:1.11.6-alpine example-whitelist.yaml http://YOUR_LOCAL_IP:6060 YOUR_LOCAL_IP
+```
+
+## Example whitelist yaml file
+
+This is an example yaml file. You can have an empty file or a mix with only `generalwhitelist` or `images`.
+
+```yaml
+generalwhitelist: #Approve CVE for any image
+  CVE-2017-6055: XML
+  CVE-2017-5586: OpenText
+images:
+  ubuntu: #Apprive CVE only for ubuntu image, regardles of the version
+    CVE-2017-5230: Java
+    CVE-2017-5230: XSX
+  alpine:
+    CVE-2017-3261: SE
+```
