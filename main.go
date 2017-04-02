@@ -47,14 +47,9 @@ type acceptedVulnerability struct {
 	Description string
 }
 
-type projectWhitelist struct {
-	ImageName     string
-	Vurnabilities []acceptedVulnerability
-}
-
 type vulnerabilitiesWhitelist struct {
-	GeneralWhitelist []acceptedVulnerability
-	Projects         []projectWhitelist
+	GeneralWhitelist map[string]string
+	Images           map[string]map[string]string
 }
 
 func main() {
@@ -125,7 +120,7 @@ func analyzeImage(imageName string, tmpPath string, clairURL string, scannerIP s
 		log.Printf("Analyzing failed: %s", err)
 		return err
 	}
-	err = vulnerabilitiesApproved(vulnerabilities, whitelist)
+	err = vulnerabilitiesApproved(imageName, vulnerabilities, whitelist)
 	if err != nil {
 		log.Printf("Image contains unapproved vulnerabilities: %s", err)
 		return err
@@ -133,22 +128,39 @@ func analyzeImage(imageName string, tmpPath string, clairURL string, scannerIP s
 	return nil
 }
 
-func vulnerabilitiesApproved(vulnerabilities []vulnerabilityInfo, whitelist vulnerabilitiesWhitelist) error {
+func vulnerabilitiesApproved(imageName string, vulnerabilities []vulnerabilityInfo, whitelist vulnerabilitiesWhitelist) error {
+	var unapproved []string
+	imageVulnerabilities := getImageVulnerabilities(imageName, whitelist.Images)
+
 	for i := 0; i < len(vulnerabilities); i++ {
-		if vulnerabilityApproved(vulnerabilities[i].vulnerability, whitelist) == false {
-			return errors.New("Vailed on vulnerability")
+		vulnerability := vulnerabilities[i].vulnerability
+		vulnerable := true
+
+		if _, exists := whitelist.GeneralWhitelist[vulnerability]; exists {
+			vulnerable = false
 		}
+		if vulnerable && len(imageVulnerabilities) > 0 {
+			if _, exists := imageVulnerabilities[vulnerability]; exists {
+				vulnerable = false
+			}
+		}
+		if vulnerable {
+			unapproved = append(unapproved, vulnerability)
+		}
+	}
+	if len(unapproved) > 0 {
+		return fmt.Errorf("%s", unapproved)
 	}
 	return nil
 }
 
-func vulnerabilityApproved(vulnerability string, whitelist vulnerabilitiesWhitelist) bool {
-	for i := 0; i < len(whitelist.GeneralWhitelist); i++ {
-		if vulnerability == whitelist.GeneralWhitelist[i].Cve {
-			return true
-		}
+func getImageVulnerabilities(imageName string, whitelistImageVulnerabilities map[string]map[string]string) map[string]string {
+	var imageVulnerabilities map[string]string
+	imageWithoutVersion := strings.Split(imageName, ":")
+	if val, exists := whitelistImageVulnerabilities[imageWithoutVersion[0]]; exists {
+		imageVulnerabilities = val
 	}
-	return false
+	return imageVulnerabilities
 }
 
 func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP string) error {

@@ -1,0 +1,3 @@
+images:
+  nginx:
+    CVE-2016-6301: NTP atack
