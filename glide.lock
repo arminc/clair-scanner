@@ -1,0 +1,140 @@
+hash: 0e78b9eaa19a3b313883920ee4193729a6d22a1398fbb5ee3bf7875f58105123
+updated: 2017-04-02T10:17:31.18815474+02:00
+imports:
+- name: github.com/beorn7/perks
+  version: b965b613227fddccbfffe13eae360ed3fa822f8d
+  subpackages:
+  - quantile
+- name: github.com/coreos/clair
+  version: 8bc9183db3beb8704e4109c582cfeaa0b86e7abf
+  subpackages:
+  - api/v1
+  - database
+  - ext/featurefmt
+  - ext/featurens
+  - ext/imagefmt
+  - ext/notification
+  - ext/versionfmt
+  - ext/vulnmdsrc
+  - ext/vulnsrc
+  - pkg/commonerr
+  - pkg/stopper
+  - pkg/tarutil
+- name: github.com/coreos/go-systemd
+  version: 4f14f6deef2da87e4aa59e6c1c1f3e02ba44c5e1
+  subpackages:
+  - journal
+- name: github.com/coreos/pkg
+  version: 2c77715c4df99b5420ffcae14ead08f52104065d
+  subpackages:
+  - capnslog
+  - timeutil
+- name: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  subpackages:
+  - spew
+- name: github.com/docker/distribution
+  version: 08b06dc023674763e7b36d404cf0c7664cee1f5e
+  subpackages:
+  - digestset
+  - reference
+- name: github.com/docker/docker
+  version: 04da4041757370fb6f85510c8977c5a18ddae380
+  subpackages:
+  - api
+  - api/types
+  - api/types/blkiodev
+  - api/types/container
+  - api/types/events
+  - api/types/filters
+  - api/types/image
+  - api/types/mount
+  - api/types/network
+  - api/types/registry
+  - api/types/strslice
+  - api/types/swarm
+  - api/types/time
+  - api/types/versions
+  - api/types/volume
+  - client
+  - pkg/ioutils
+  - pkg/longpath
+  - pkg/system
+  - pkg/tlsconfig
+- name: github.com/docker/go-connections
+  version: a2afab9802043837035592f1c24827fb70766de9
+  subpackages:
+  - nat
+  - sockets
+  - tlsconfig
+- name: github.com/docker/go-units
+  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
+- name: github.com/docker/libtrust
+  version: aabc10ec26b754e797f9028f4589c5b7bd90dc20
+- name: github.com/fatih/color
+  version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
+- name: github.com/fernet/fernet-go
+  version: 1b2437bc582b3cfbb341ee5a29f8ef5b42912ff2
+- name: github.com/golang/protobuf
+  version: 5fc2294e655b78ed8a02082d37808d46c17d7e64
+  subpackages:
+  - proto
+- name: github.com/julienschmidt/httprouter
+  version: 21439ef4d70ba4f3e2a5ed9249e7b03af4019b40
+- name: github.com/mattn/go-colorable
+  version: ded68f7a9561c023e790de24279db7ebf473ea80
+- name: github.com/mattn/go-isatty
+  version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
+- name: github.com/matttproud/golang_protobuf_extensions
+  version: d0c3fe89de86839aecf2e0579c40ba3bb336a453
+  subpackages:
+  - pbutil
+- name: github.com/Microsoft/go-winio
+  version: fff283ad5116362ca252298cfc9b95828956d85d
+- name: github.com/opencontainers/go-digest
+  version: aa2ec055abd10d26d539eb630a92241b781ce4bc
+- name: github.com/pborman/uuid
+  version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
+- name: github.com/pkg/errors
+  version: ff09b135c25aae272398c51a07235b90a75aa4f0
+- name: github.com/pmezard/go-difflib
+  version: e8554b8641db39598be7f6342874b958f12ae1d4
+  subpackages:
+  - difflib
+- name: github.com/prometheus/client_golang
+  version: 67994f177195311c3ea3d4407ed0175e34a4256f
+  subpackages:
+  - prometheus
+- name: github.com/prometheus/client_model
+  version: fa8ad6fec33561be4280a8f0514318c79d7f6cb6
+  subpackages:
+  - go
+- name: github.com/prometheus/common
+  version: dba5e39d4516169e840def50e507ef5f21b985f9
+  subpackages:
+  - expfmt
+  - internal/bitbucket.org/ww/goautoneg
+  - model
+- name: github.com/prometheus/procfs
+  version: 406e5b7bfd8201a36e2bb5f7bdae0b03380c2ce8
+- name: github.com/Sirupsen/logrus
+  version: 10f801ebc38b33738c9d17d50860f484a0988ff5
+- name: github.com/stretchr/testify
+  version: 5b9da39b66e8e994455c2525c4421c8cc00a7f93
+  subpackages:
+  - assert
+- name: golang.org/x/net
+  version: 1d7a0b2100da090d8b02afcfb42f97e2c77e71a4
+  subpackages:
+  - context
+  - context/ctxhttp
+  - netutil
+  - proxy
+- name: golang.org/x/sys
+  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
+  subpackages:
+  - unix
+  - windows
+- name: gopkg.in/yaml.v2
+  version: a3f3340b5840cee44f372bddb5880fcbc419b46a
+testImports: []
