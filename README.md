@@ -31,3 +31,17 @@ For the clair-scanner to work you need a clair server. It is not always convenie
 ## Credits
 
 The clair-scanner is a copy of the Clair 'analyze-local-images' <https://github.com/coreos/clair/tree/master/contrib/analyze-local-images> with changes/improvments and addition that checks the vulnerabilities against a whitelist.
+
+## Build
+
+To build clair-scanner first you need to initialize vendor dependencies by using glide <https://glide.sh/>
+
+```bash
+glide install
+```
+
+And then it's simpel as running
+
+```bash
+go build
+```
