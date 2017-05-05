@@ -57,8 +57,8 @@ docker run -ti --rm -v "$(pwd)":/gopath/src/clair-scanner -w /gopath/src/clair-s
 Example of a container scan, start Clair:
 
 ```bash
-docker run -p 5432:5432 -d --name db arminc/clair-db:2017-04-01
-docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair:v2.0.0-rc.0
+docker run -p 5432:5432 -d --name db arminc/clair-db:2017-05-05
+docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:v2.0.0-rc.0
 ```
 
 Now scan a container, that has a whitelisted CVE:
