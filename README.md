@@ -11,11 +11,11 @@ What you want is:
 1. Test the container for vulnerabilities
 1. Check the vulnerabilities against allowed ones, if everything is allowed pass, otherwise fail
 
-This straight forward process is not that easy to achieve when using the services like Docker Hub or Quay.io. Docker Hub does not have an API and Quay.io triggers afterwards and therefore makes it harder to do straight forward CI/CD pipeline. (Although it is possible to achieve this with Quay.io because they have a web hook that notifies you about the vulnerabilities).
+This straight forward process is not that easy to achieve when using the services like Docker Hub or Quay.io. This is because they work asynchronously which makes it harder to do straight forward CI/CD pipeline.
 
 ## Clair to the rescue
 
-CoreOS has created an awesome container scan tool called "clair". Clair is also used by Quay.io. What clair does not have is a simpel tool that scans your image and compares the vulnerabilities against a whitelist to see if they are approved or not.
+CoreOS has created an awesome container scan tool called "clair". Clair is also used by Quay.io. What clair does not have is a simple tool that scans your image and compares the vulnerabilities against a whitelist to see if they are approved or not.
 
 This is where clair-scanner comes in to place. The clair-scanner does the following:
 
