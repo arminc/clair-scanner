@@ -1,5 +1,7 @@
 # Clair scanner
 
+![Build Status](https://img.shields.io/maintenance/yes/2017.svg)
+
 ## Docker containers vulnerability scan
 
 When you work with containers (Docker) you are not only packaging your application but also part of the OS. Therefore it is crucial to know what kind of libraries might be vulnerable in you container. One way to find this information is to use and look at the Docker Hub or Quay.io security scan. The problem whit these scans is that they are only showing you the information but are not part of your CI/CD that actually blocks your container when it contains vulnerabilities.
