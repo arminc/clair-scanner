@@ -1,6 +1,8 @@
 # Clair scanner
 
-![Maintenance](https://img.shields.io/maintenance/yes/2017.svg)[![Build Status](https://travis-ci.org/arminc/clair-scanner.svg?branch=master)](https://travis-ci.org/arminc/clair-scanner)
+![Maintenance](https://img.shields.io/maintenance/yes/2017.svg)
+[![Build Status](https://travis-ci.org/arminc/clair-scanner.svg?branch=master)](https://travis-ci.org/arminc/clair-scanner)
+[![Go Report Card](https://goreportcard.com/badge/github.com/arminc/clair-scanner)](https://goreportcard.com/report/github.com/arminc/clair-scanner)
 
 ## Docker containers vulnerability scan
 
