@@ -168,7 +168,7 @@ func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP
 	go listenHTTP(tmpPath, ch)
 	select {
 	case err := <-ch:
-		return fmt.Errorf("An error occured when starting HTTP server: %s", err)
+		return fmt.Errorf("An error occurred when starting HTTP server: %s", err)
 	case <-time.After(100 * time.Millisecond):
 		break
 	}
