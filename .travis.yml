@@ -1,0 +1,25 @@
+language: go
+
+go:
+  - 1.9
+
+services:
+  - docker
+
+install:
+  - make install
+  - make ensure
+  - make docker
+  
+script:
+  - make release
+
+deploy:  
+  provider: releases
+  skip_cleanup: true
+  api_key: $API_KEY
+  file_glob: true
+  file: dist/*
+  on:
+    repo: arminc/clair-scanner
+    tags: true
