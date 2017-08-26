@@ -36,22 +36,16 @@ The clair-scanner is a copy of the Clair 'analyze-local-images' <https://github.
 
 ## Build
 
-clair-scanner is build with Go 1.9 and uses `dep` as dependencies manager. See here how to install `dep` <https://github.com/golang/dep>
+clair-scanner is build with Go 1.9 and uses `dep` as dependencies manager. Use the Makefile to build and install dependencies.
 
 ```bash
-dep ensure
-```
-
-And then it's simpel as running
-
-```bash
-go build
+make ensure && make build
 ```
 
 Cross compile:
 
 ```bash
-docker run -ti --rm -v "$(pwd)":/gopath/src/clair-scanner -w /gopath/src/clair-scanner tcnksm/gox:1.7
+make cross
 ```
 
 ## Run
