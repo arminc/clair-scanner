@@ -14,7 +14,9 @@ docker:
 		docker build -t golang-cross-compile .
 
 cross: docker
-	docker run -ti --rm -v $(CURDIR):/gopath/src/clair-scanner -w /gopath/src/clair-scanner golang-cross-compile gox -osarch="darwin/amd64 darwin/386 linux/amd64 linux/386 windows/amd64 windows/386"
+	docker run -ti --rm -v $(CURDIR):/gopath/src/clair-scanner -w /gopath/src/clair-scanner golang-cross-compile gox -osarch="darwin/amd64 darwin/386 linux/amd64 linux/386 windows/amd64 windows/386" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
 clean: 
-	rm clair-scanner*
+	rm -rf dist
+
+release: build cross

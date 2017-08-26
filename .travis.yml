@@ -1,0 +1,15 @@
+language: go
+
+go:
+  - 1.9
+
+services:
+  - docker
+
+install:
+  - make install
+  - make ensure
+  - make docker
+  
+script:
+  - make release
