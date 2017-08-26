@@ -36,10 +36,10 @@ The clair-scanner is a copy of the Clair 'analyze-local-images' <https://github.
 
 ## Build
 
-To build clair-scanner first you need to initialize vendor dependencies by using glide <https://glide.sh/>
+clair-scanner is build with Go 1.9 and uses `dep` as dependencies manager. See here how to install `dep` <https://github.com/golang/dep>
 
 ```bash
-glide install
+dep ensure
 ```
 
 And then it's simpel as running
