@@ -28,7 +28,7 @@ import (
 
 const (
 	scriptTerminatedByControlC = 130
-	generalExit                = 0
+	generalExit                = 1
 	success                    = 0
 	tmpPrefix                  = "clair-scanner-"
 	httpPort                   = 9279
