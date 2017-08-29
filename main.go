@@ -53,8 +53,29 @@ type vulnerabilitiesWhitelist struct {
 }
 
 func main() {
+
+	//-image=arminc/clair-local-scan -whitelist=example-nginx.yaml  -clairip=http://192.168.42.35:6060  -localip=192.168.42.35
+
+	dockerImagePtr := flag.String("image", "", "name of the docker image (Required)");
+	whitelistPtr := flag.String("whitelist", "", "Optional whitelist used suppressing whitelisted vulnerabilities (Required)");
+	clairIPPtr :=flag.String("clairip", "", "IPadress of clair scanner image running (Required)");
+	localIPPtr :=flag.String("localip", "", "IPadress of the machine the local-scanner runs on (Required)");
+
 	flag.Parse()
-	start(flag.Args()[0], parseWhitelist(flag.Args()[1]), flag.Args()[2], flag.Args()[3])
+	if *dockerImagePtr=="" || *clairIPPtr=="" || *localIPPtr=="" {
+		fmt.Println("You need to specify at least the image, the clairIP and your own ip-address")
+		os.Exit(1)
+	}
+	var vulnerabilitiesWhitelistPtr *vulnerabilitiesWhitelist
+
+	if *whitelistPtr =="" {
+		vulnerabilitiesWhitelistPtr := parseWhitelist(*whitelistPtr)
+		start(*dockerImagePtr, vulnerabilitiesWhitelistPtr, *clairIPPtr,*localIPPtr)
+	}else{
+		vulnerabilitiesWhitelistPtr := vulnerabilitiesWhitelist{}
+		start(*dockerImagePtr, vulnerabilitiesWhitelistPtr, *clairIPPtr,*localIPPtr)
+	}
+	start(*dockerImagePtr, *vulnerabilitiesWhitelistPtr, *clairIPPtr,*localIPPtr)
 	os.Exit(success)
 }
 
