@@ -67,14 +67,12 @@ func main() {
 		fmt.Println("You need to specify at least the image, the clairIP and your own ip-address")
 		os.Exit(1)
 	}
+	var vulnerabilitiesWhitelist = vulnerabilitiesWhitelist{}
 
-	if *whitelistPtr == "" {
-		vulnerabilitiesWhitelistPtr := vulnerabilitiesWhitelist{}
-		start(*dockerImagePtr, vulnerabilitiesWhitelistPtr, *clairIPPtr, *localIPPtr, *authTokenPtr)
-	} else {
-		vulnerabilitiesWhitelistPtr := parseWhitelist(*whitelistPtr)
-		start(*dockerImagePtr, vulnerabilitiesWhitelistPtr, *clairIPPtr, *localIPPtr, *authTokenPtr)
+	if *whitelistPtr != "" {
+		vulnerabilitiesWhitelist = parseWhitelist(*whitelistPtr)
 	}
+	start(*dockerImagePtr, vulnerabilitiesWhitelist, *clairIPPtr, *localIPPtr, *authTokenPtr)
 	os.Exit(success)
 }
 
@@ -321,7 +319,7 @@ func analyzeLayer(clairURL, path, layerName, parentLayerName string, authToken s
 	}
 	request.Header.Set("Content-Type", "application/json")
 	if authToken != "" {
-		request.Header.Set("Authorization:", "Bearer"+authToken)
+		request.Header.Set("Authorization", "Bearer "+authToken)
 	}
 	client := &http.Client{}
 	response, err := client.Do(request)
@@ -361,9 +359,9 @@ func getVulnerabilities(clairURL string, layerIds []string, authToken string) ([
 }
 
 func fetchLayerVulnerabilities(clairURL string, layerID string, authToken string) (v1.Layer, error) {
-	request, err := http.NewRequest("GET", clairURL + fmt.Sprintf(getLayerFeaturesURI, layerID), nil)
+	request, err := http.NewRequest("GET", clairURL+fmt.Sprintf(getLayerFeaturesURI, layerID), nil)
 	if authToken != "" {
-		request.Header.Set("Authorization:", "Bearer"+authToken)
+		request.Header.Set("Authorization", "Bearer "+authToken)
 	}
 	client := &http.Client{}
 	response, err := client.Do(request)
