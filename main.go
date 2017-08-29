@@ -61,6 +61,7 @@ func main() {
 	clairIPPtr := flag.String("clairip", "", "IPadress of clair scanner image running (Required)")
 	localIPPtr := flag.String("localip", "", "IPadress of the machine the local-scanner runs on (Required)")
 	authTokenPtr := flag.String("authToken", "", "Bearer-token which can be used to authenticate against intermediary infrastructure")
+	useDocker112Ptr := flag.Bool("useOlderdocker", false, "Set to true when you want to use an older version of the docker client")
 
 	flag.Parse()
 	if *dockerImagePtr == "" || *clairIPPtr == "" || *localIPPtr == "" {
@@ -72,7 +73,7 @@ func main() {
 	if *whitelistPtr != "" {
 		vulnerabilitiesWhitelist = parseWhitelist(*whitelistPtr)
 	}
-	start(*dockerImagePtr, vulnerabilitiesWhitelist, *clairIPPtr, *localIPPtr, *authTokenPtr)
+	start(*dockerImagePtr, vulnerabilitiesWhitelist, *clairIPPtr, *localIPPtr, *authTokenPtr, *useDocker112Ptr)
 	os.Exit(success)
 }
 
@@ -89,7 +90,7 @@ func parseWhitelist(whitelistFile string) vulnerabilitiesWhitelist {
 	return whitelist
 }
 
-func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string, scannerIP string, authToken string) {
+func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string, scannerIP string, authToken string, useDocker112Ptr bool) {
 	tmpPath := createTmpPath()
 	defer os.RemoveAll(tmpPath)
 	interrupt := make(chan os.Signal)
@@ -97,7 +98,7 @@ func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string
 
 	analyzeCh := make(chan error, 1)
 	go func() {
-		analyzeCh <- analyzeImage(imageName, tmpPath, clairURL, scannerIP, whitelist, authToken)
+		analyzeCh <- analyzeImage(imageName, tmpPath, clairURL, scannerIP, whitelist, authToken, useDocker112Ptr)
 	}()
 
 	select {
@@ -118,8 +119,8 @@ func createTmpPath() string {
 	return tmpPath
 }
 
-func analyzeImage(imageName string, tmpPath string, clairURL string, scannerIP string, whitelist vulnerabilitiesWhitelist, authToken string) error {
-	err := saveImage(imageName, tmpPath)
+func analyzeImage(imageName string, tmpPath string, clairURL string, scannerIP string, whitelist vulnerabilitiesWhitelist, authToken string, useDocker112Ptr bool) error {
+	err := saveImage(imageName, tmpPath, useDocker112Ptr)
 	if err != nil {
 		log.Printf("Could not save the image %s", err)
 		return err
@@ -209,16 +210,32 @@ func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP
 	return nil
 }
 
-func saveImage(imageName string, tmpPath string) error {
-	docker := createDockerClient()
+func saveImage(imageName string, tmpPath string, useDocker112Ptr bool) error {
+
 	imageID := []string{imageName}
-	imageReader, err := docker.ImageSave(context.Background(), imageID)
-	if err != nil {
-		return err
+
+	if(useDocker112Ptr){
+		defaultHeaders := map[string]string{"User-Agent": "engine-api-cli-1.0"}
+		cli, err := client.NewClient("unix:///var/run/docker.sock", "v1.22", nil, defaultHeaders)
+		if err != nil {
+			return err
+		}
+		imageReader, err :=cli.ImageSave(context.Background(), imageID)
+		if err != nil {
+			return err
+		}
+		defer imageReader.Close()
+		return untar(imageReader, tmpPath)
+	}else{
+		docker := createDockerClient()
+		imageReader, err := docker.ImageSave(context.Background(), imageID)
+		if err != nil {
+			return err
+		}
+		defer imageReader.Close()
+		return untar(imageReader, tmpPath)
 	}
 
-	defer imageReader.Close()
-	return untar(imageReader, tmpPath)
 }
 
 func createDockerClient() *client.Client {
