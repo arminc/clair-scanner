@@ -322,7 +322,7 @@ func listenHTTP(path string, ch chan error) {
 		return http.HandlerFunc(fc)
 	}
 
-	ch <- http.ListenAndServe(":"+strconv.Itoa(httpPort), fileServer(path))
+	ch <- http.ListenAndServe(":"+strconv.Itoa(localPort), fileServer(path))
 }
 
 func analyzeLayer(clairURL, path, layerName, parentLayerName string, authToken string) error {
