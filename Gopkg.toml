@@ -24,6 +24,8 @@
 [[constraint]]
   name = "github.com/docker/engine-api/client"
   version =  "v0.4.0"
+
+  
 [[constraint]]
   name = "github.com/coreos/clair"
   version = "2.0.0-rc.0"

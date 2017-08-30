@@ -52,22 +52,27 @@ type vulnerabilitiesWhitelist struct {
 	Images           map[string]map[string]string
 }
 
+var localPort = 0
+
 func main() {
 
 	//-image=arminc/clair-local-scan -whitelist=example-nginx.yaml  -clairip=http://192.168.42.35:6060  -localip=192.168.42.35
 
 	dockerImagePtr := flag.String("image", "", "name of the docker image (Required)")
 	whitelistPtr := flag.String("whitelist", "", "Optional whitelist used suppressing whitelisted vulnerabilities")
-	clairIPPtr := flag.String("clairip", "", "IPadress of clair scanner image running (Required)")
-	localIPPtr := flag.String("localip", "", "IPadress of the machine the local-scanner runs on (Required)")
+	clairIPPtr := flag.String("clairIP", "", "IPadress of clair scanner image running (Required)")
+	localIPPtr := flag.String("localIP", "", "IPadress of the machine the local-scanner runs on (Required)")
 	authTokenPtr := flag.String("authToken", "", "Bearer-token which can be used to authenticate against intermediary infrastructure")
-	useDocker112Ptr := flag.Bool("useOlderdocker", false, "Set to true when you want to use an older version of the docker client")
+	useDocker112Ptr := flag.Bool("useOlderDocker", false, "Set to true when you want to use an older version of the docker client")
+	usePortPtr := flag.Int("usePort", 0, "Optional http port to use to open up from the clair-scanner")
 
 	flag.Parse()
 	if *dockerImagePtr == "" || *clairIPPtr == "" || *localIPPtr == "" {
-		fmt.Println("You need to specify at least the image, the clairIP and your own ip-address")
+		fmt.Println("You need to specify at least the image, the clairIP and your localIP. See clair-scanner -h for details")
 		os.Exit(1)
 	}
+
+	localPort = *usePortPtr
 	var vulnerabilitiesWhitelist = vulnerabilitiesWhitelist{}
 
 	if *whitelistPtr != "" {
@@ -192,7 +197,10 @@ func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP
 		break
 	}
 
-	tmpPath = "http://" + scannerIP + ":" + strconv.Itoa(httpPort)
+	if localPort == 0{
+		localPort = httpPort
+	}
+	tmpPath = "http://" + scannerIP + ":" + strconv.Itoa(localPort)
 	var err error
 
 	for i := 0; i < len(layerIds); i++ {
