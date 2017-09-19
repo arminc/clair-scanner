@@ -52,9 +52,33 @@ type vulnerabilitiesWhitelist struct {
 	Images           map[string]map[string]string
 }
 
+var localPort = 0
+
 func main() {
+
+	//-image=arminc/clair-local-scan -whitelist=example-nginx.yaml  -clairip=http://192.168.42.35:6060  -localip=192.168.42.35
+
+	dockerImagePtr := flag.String("image", "", "name of the docker image (Required)")
+	whitelistPtr := flag.String("whitelist", "", "Optional whitelist used suppressing whitelisted vulnerabilities")
+	clairIPPtr := flag.String("clairIP", "", "IPadress of clair scanner image running (Required)")
+	localIPPtr := flag.String("localIP", "", "IPadress of the machine the local-scanner runs on (Required)")
+	authTokenPtr := flag.String("authToken", "", "Bearer-token which can be used to authenticate against intermediary infrastructure")
+	useDocker112Ptr := flag.Bool("useOlderDocker", false, "Set to true when you want to use an older version of the docker client")
+	usePortPtr := flag.Int("usePort", 0, "Optional http port to use to open up from the clair-scanner")
+
 	flag.Parse()
-	start(flag.Args()[0], parseWhitelist(flag.Args()[1]), flag.Args()[2], flag.Args()[3])
+	if *dockerImagePtr == "" || *clairIPPtr == "" || *localIPPtr == "" {
+		fmt.Println("You need to specify at least the image, the clairIP and your localIP. See clair-scanner -h for details")
+		os.Exit(1)
+	}
+
+	localPort = *usePortPtr
+	var vulnerabilitiesWhitelist = vulnerabilitiesWhitelist{}
+
+	if *whitelistPtr != "" {
+		vulnerabilitiesWhitelist = parseWhitelist(*whitelistPtr)
+	}
+	start(*dockerImagePtr, vulnerabilitiesWhitelist, *clairIPPtr, *localIPPtr, *authTokenPtr, *useDocker112Ptr)
 	os.Exit(success)
 }
 
@@ -71,7 +95,7 @@ func parseWhitelist(whitelistFile string) vulnerabilitiesWhitelist {
 	return whitelist
 }
 
-func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string, scannerIP string) {
+func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string, scannerIP string, authToken string, useDocker112Ptr bool) {
 	tmpPath := createTmpPath()
 	defer os.RemoveAll(tmpPath)
 	interrupt := make(chan os.Signal)
@@ -79,7 +103,7 @@ func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string
 
 	analyzeCh := make(chan error, 1)
 	go func() {
-		analyzeCh <- analyzeImage(imageName, tmpPath, clairURL, scannerIP, whitelist)
+		analyzeCh <- analyzeImage(imageName, tmpPath, clairURL, scannerIP, whitelist, authToken, useDocker112Ptr)
 	}()
 
 	select {
@@ -100,8 +124,8 @@ func createTmpPath() string {
 	return tmpPath
 }
 
-func analyzeImage(imageName string, tmpPath string, clairURL string, scannerIP string, whitelist vulnerabilitiesWhitelist) error {
-	err := saveImage(imageName, tmpPath)
+func analyzeImage(imageName string, tmpPath string, clairURL string, scannerIP string, whitelist vulnerabilitiesWhitelist, authToken string, useDocker112Ptr bool) error {
+	err := saveImage(imageName, tmpPath, useDocker112Ptr)
 	if err != nil {
 		log.Printf("Could not save the image %s", err)
 		return err
@@ -111,11 +135,11 @@ func analyzeImage(imageName string, tmpPath string, clairURL string, scannerIP s
 		log.Printf("Could not read the image layer ids %s", err)
 		return err
 	}
-	if err = analyzeLayers(layerIds, tmpPath, clairURL, scannerIP); err != nil {
+	if err = analyzeLayers(layerIds, tmpPath, clairURL, scannerIP, authToken); err != nil {
 		log.Printf("Analyzing faild: %s", err)
 		return err
 	}
-	vulnerabilities, err := getVulnerabilities(clairURL, layerIds)
+	vulnerabilities, err := getVulnerabilities(clairURL, layerIds, authToken)
 	if err != nil {
 		log.Printf("Analyzing failed: %s", err)
 		return err
@@ -163,7 +187,7 @@ func getImageVulnerabilities(imageName string, whitelistImageVulnerabilities map
 	return imageVulnerabilities
 }
 
-func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP string) error {
+func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP string, authToken string) error {
 	ch := make(chan error)
 	go listenHTTP(tmpPath, ch)
 	select {
@@ -173,16 +197,19 @@ func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP
 		break
 	}
 
-	tmpPath = "http://" + scannerIP + ":" + strconv.Itoa(httpPort)
+	if localPort == 0{
+		localPort = httpPort
+	}
+	tmpPath = "http://" + scannerIP + ":" + strconv.Itoa(localPort)
 	var err error
 
 	for i := 0; i < len(layerIds); i++ {
 		log.Printf("Analyzing %s\n", layerIds[i])
 
 		if i > 0 {
-			err = analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], layerIds[i-1])
+			err = analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], layerIds[i-1], authToken)
 		} else {
-			err = analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], "")
+			err = analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], "", authToken)
 		}
 		if err != nil {
 			return fmt.Errorf("Could not analyze layer: %s", err)
@@ -191,16 +218,32 @@ func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP
 	return nil
 }
 
-func saveImage(imageName string, tmpPath string) error {
-	docker := createDockerClient()
+func saveImage(imageName string, tmpPath string, useDocker112Ptr bool) error {
+
 	imageID := []string{imageName}
-	imageReader, err := docker.ImageSave(context.Background(), imageID)
-	if err != nil {
-		return err
+
+	if(useDocker112Ptr){
+		defaultHeaders := map[string]string{"User-Agent": "engine-api-cli-1.0"}
+		cli, err := client.NewClient("unix:///var/run/docker.sock", "v1.22", nil, defaultHeaders)
+		if err != nil {
+			return err
+		}
+		imageReader, err :=cli.ImageSave(context.Background(), imageID)
+		if err != nil {
+			return err
+		}
+		defer imageReader.Close()
+		return untar(imageReader, tmpPath)
+	}else{
+		docker := createDockerClient()
+		imageReader, err := docker.ImageSave(context.Background(), imageID)
+		if err != nil {
+			return err
+		}
+		defer imageReader.Close()
+		return untar(imageReader, tmpPath)
 	}
 
-	defer imageReader.Close()
-	return untar(imageReader, tmpPath)
 }
 
 func createDockerClient() *client.Client {
@@ -279,10 +322,10 @@ func listenHTTP(path string, ch chan error) {
 		return http.HandlerFunc(fc)
 	}
 
-	ch <- http.ListenAndServe(":"+strconv.Itoa(httpPort), fileServer(path))
+	ch <- http.ListenAndServe(":"+strconv.Itoa(localPort), fileServer(path))
 }
 
-func analyzeLayer(clairURL, path, layerName, parentLayerName string) error {
+func analyzeLayer(clairURL, path, layerName, parentLayerName string, authToken string) error {
 	payload := v1.LayerEnvelope{
 		Layer: &v1.Layer{
 			Name:       layerName,
@@ -300,6 +343,9 @@ func analyzeLayer(clairURL, path, layerName, parentLayerName string) error {
 		return err
 	}
 	request.Header.Set("Content-Type", "application/json")
+	if authToken != "" {
+		request.Header.Set("Authorization", "Bearer "+authToken)
+	}
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
@@ -314,10 +360,10 @@ func analyzeLayer(clairURL, path, layerName, parentLayerName string) error {
 
 	return nil
 }
-func getVulnerabilities(clairURL string, layerIds []string) ([]vulnerabilityInfo, error) {
+func getVulnerabilities(clairURL string, layerIds []string, authToken string) ([]vulnerabilityInfo, error) {
 	var vulnerabilities = make([]vulnerabilityInfo, 0)
 	//Last layer gives you all the vulnerabilities of all layers
-	rawVulnerabilities, err := fetchLayerVulnerabilities(clairURL, layerIds[len(layerIds)-1])
+	rawVulnerabilities, err := fetchLayerVulnerabilities(clairURL, layerIds[len(layerIds)-1], authToken)
 	if err != nil {
 		return vulnerabilities, err
 	}
@@ -337,8 +383,13 @@ func getVulnerabilities(clairURL string, layerIds []string) ([]vulnerabilityInfo
 	return vulnerabilities, nil
 }
 
-func fetchLayerVulnerabilities(clairURL string, layerID string) (v1.Layer, error) {
-	response, err := http.Get(clairURL + fmt.Sprintf(getLayerFeaturesURI, layerID))
+func fetchLayerVulnerabilities(clairURL string, layerID string, authToken string) (v1.Layer, error) {
+	request, err := http.NewRequest("GET", clairURL+fmt.Sprintf(getLayerFeaturesURI, layerID), nil)
+	if authToken != "" {
+		request.Header.Set("Authorization", "Bearer "+authToken)
+	}
+	client := &http.Client{}
+	response, err := client.Do(request)
 	if err != nil {
 		return v1.Layer{}, err
 	}
