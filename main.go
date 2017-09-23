@@ -12,7 +12,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -47,6 +46,7 @@ type vulnerabilitiesWhitelist struct {
 }
 
 func main() {
+	log.Print("Start clair-scanner")
 	flag.Parse()
 	start(flag.Args()[0], parseWhitelist(flag.Args()[1]), flag.Args()[2], flag.Args()[3])
 	os.Exit(success)
@@ -76,9 +76,12 @@ func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string
 
 	saveDockerImage(imageName, tmpPath)
 	layerIds := getImageLayerIds(tmpPath)
-	if err := analyzeLayers(layerIds, tmpPath, clairURL, scannerIP); err != nil {
-		log.Fatalf("Analyzing faild: %s", err)
-	}
+
+	//Start a server that can serve Docker image layers to Clair
+	server := httpFileServer(tmpPath, strconv.Itoa(httpPort))
+	defer server.Shutdown(nil)
+
+	analyzeLayers(layerIds, clairURL, scannerIP)
 	vulnerabilities, err := getVulnerabilities(clairURL, layerIds)
 	if err != nil {
 		log.Fatalf("Analyzing failed: %s", err)
@@ -124,17 +127,8 @@ func getImageVulnerabilities(imageName string, whitelistImageVulnerabilities map
 	return imageVulnerabilities
 }
 
-func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP string) error {
-	ch := make(chan error)
-	go listenHTTP(tmpPath, ch)
-	select {
-	case err := <-ch:
-		return fmt.Errorf("An error occurred when starting HTTP server: %s", err)
-	case <-time.After(100 * time.Millisecond):
-		break
-	}
-
-	tmpPath = "http://" + scannerIP + ":" + strconv.Itoa(httpPort)
+func analyzeLayers(layerIds []string, clairURL string, scannerIP string) {
+	tmpPath := "http://" + scannerIP + ":" + strconv.Itoa(httpPort)
 	var err error
 
 	for i := 0; i < len(layerIds); i++ {
@@ -146,22 +140,9 @@ func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP
 			err = analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], "")
 		}
 		if err != nil {
-			return fmt.Errorf("Could not analyze layer: %s", err)
+			log.Fatalf("Could not analyze layer: %s", err)
 		}
 	}
-	return nil
-}
-
-func listenHTTP(path string, ch chan error) {
-	fileServer := func(path string) http.Handler {
-		fc := func(w http.ResponseWriter, r *http.Request) {
-			http.FileServer(http.Dir(path)).ServeHTTP(w, r)
-			return
-		}
-		return http.HandlerFunc(fc)
-	}
-
-	ch <- http.ListenAndServe(":"+strconv.Itoa(httpPort), fileServer(path))
 }
 
 func analyzeLayer(clairURL, path, layerName, parentLayerName string) error {
