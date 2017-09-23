@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -127,56 +126,6 @@ func getImageVulnerabilities(imageName string, whitelistImageVulnerabilities map
 	return imageVulnerabilities
 }
 
-func analyzeLayers(layerIds []string, clairURL string, scannerIP string) {
-	tmpPath := "http://" + scannerIP + ":" + strconv.Itoa(httpPort)
-	var err error
-
-	for i := 0; i < len(layerIds); i++ {
-		log.Printf("Analyzing %s\n", layerIds[i])
-
-		if i > 0 {
-			err = analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], layerIds[i-1])
-		} else {
-			err = analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], "")
-		}
-		if err != nil {
-			log.Fatalf("Could not analyze layer: %s", err)
-		}
-	}
-}
-
-func analyzeLayer(clairURL, path, layerName, parentLayerName string) error {
-	payload := v1.LayerEnvelope{
-		Layer: &v1.Layer{
-			Name:       layerName,
-			Path:       path,
-			ParentName: parentLayerName,
-			Format:     "Docker",
-		},
-	}
-	jsonPayload, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
-	request, err := http.NewRequest("POST", clairURL+postLayerURI, bytes.NewBuffer(jsonPayload))
-	if err != nil {
-		return err
-	}
-	request.Header.Set("Content-Type", "application/json")
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != 201 {
-		body, _ := ioutil.ReadAll(response.Body)
-		return fmt.Errorf("Got response %d with message %s", response.StatusCode, string(body))
-	}
-
-	return nil
-}
 func getVulnerabilities(clairURL string, layerIds []string) ([]vulnerabilityInfo, error) {
 	var vulnerabilities = make([]vulnerabilityInfo, 0)
 	//Last layer gives you all the vulnerabilities of all layers
