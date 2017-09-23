@@ -1,19 +1,15 @@
 package main
 
 import (
-	"archive/tar"
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -21,7 +17,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/coreos/clair/api/v1"
-	"github.com/docker/docker/client"
 	"github.com/fatih/color"
 )
 
@@ -93,17 +88,10 @@ func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string
 }
 
 func analyzeImage(imageName string, tmpPath string, clairURL string, scannerIP string, whitelist vulnerabilitiesWhitelist) error {
-	err := saveImage(imageName, tmpPath)
-	if err != nil {
-		log.Printf("Could not save the image %s", err)
-		return err
-	}
-	layerIds, err := getImageLayerIds(tmpPath)
-	if err != nil {
-		log.Printf("Could not read the image layer ids %s", err)
-		return err
-	}
-	if err = analyzeLayers(layerIds, tmpPath, clairURL, scannerIP); err != nil {
+	saveDockerImage(imageName, tmpPath)
+	layerIds := getImageLayerIds(tmpPath)
+
+	if err := analyzeLayers(layerIds, tmpPath, clairURL, scannerIP); err != nil {
 		log.Printf("Analyzing faild: %s", err)
 		return err
 	}
@@ -178,85 +166,6 @@ func analyzeLayers(layerIds []string, tmpPath string, clairURL string, scannerIP
 		}
 		if err != nil {
 			return fmt.Errorf("Could not analyze layer: %s", err)
-		}
-	}
-	return nil
-}
-
-func saveImage(imageName string, tmpPath string) error {
-	docker := createDockerClient()
-	imageID := []string{imageName}
-	imageReader, err := docker.ImageSave(context.Background(), imageID)
-	if err != nil {
-		return err
-	}
-
-	defer imageReader.Close()
-	return untar(imageReader, tmpPath)
-}
-
-func createDockerClient() *client.Client {
-	docker, err := client.NewEnvClient()
-	if err != nil {
-		panic(err)
-	}
-	return docker
-}
-
-func getImageLayerIds(path string) ([]string, error) {
-	mf, err := os.Open(path + "/manifest.json")
-	if err != nil {
-		return nil, err
-	}
-	defer mf.Close()
-
-	// https://github.com/docker/docker/blob/master/image/tarexport/tarexport.go#L17
-	type manifestItem struct {
-		Config   string
-		RepoTags []string
-		Layers   []string
-	}
-
-	var manifest []manifestItem
-	if err = json.NewDecoder(mf).Decode(&manifest); err != nil {
-		return nil, err
-	} else if len(manifest) != 1 {
-		return nil, err
-	}
-	var layers []string
-	for _, layer := range manifest[0].Layers {
-		layers = append(layers, strings.TrimSuffix(layer, "/layer.tar"))
-	}
-	return layers, nil
-}
-
-func untar(imageReader io.ReadCloser, target string) error {
-	tarReader := tar.NewReader(imageReader)
-
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return err
-		}
-
-		path := filepath.Join(target, header.Name)
-		info := header.FileInfo()
-		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
-				return err
-			}
-			continue
-		}
-
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		if _, err = io.Copy(file, tarReader); err != nil {
-			return err
 		}
 	}
 	return nil
