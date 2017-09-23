@@ -74,38 +74,19 @@ func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string
 		os.Exit(scriptTerminatedByControlC)
 	})
 
-	analyzeCh := make(chan error, 1)
-	go func() {
-		analyzeCh <- analyzeImage(imageName, tmpPath, clairURL, scannerIP, whitelist)
-	}()
-
-	select {
-	case err := <-analyzeCh:
-		if err != nil {
-			os.Exit(generalExit)
-		}
-	}
-}
-
-func analyzeImage(imageName string, tmpPath string, clairURL string, scannerIP string, whitelist vulnerabilitiesWhitelist) error {
 	saveDockerImage(imageName, tmpPath)
 	layerIds := getImageLayerIds(tmpPath)
-
 	if err := analyzeLayers(layerIds, tmpPath, clairURL, scannerIP); err != nil {
-		log.Printf("Analyzing faild: %s", err)
-		return err
+		log.Fatalf("Analyzing faild: %s", err)
 	}
 	vulnerabilities, err := getVulnerabilities(clairURL, layerIds)
 	if err != nil {
-		log.Printf("Analyzing failed: %s", err)
-		return err
+		log.Fatalf("Analyzing failed: %s", err)
 	}
 	err = vulnerabilitiesApproved(imageName, vulnerabilities, whitelist)
 	if err != nil {
-		log.Printf("Image contains unapproved vulnerabilities: %s", err)
-		return err
+		log.Fatalf("Image contains unapproved vulnerabilities: %s", err)
 	}
-	return nil
 }
 
 func vulnerabilitiesApproved(imageName string, vulnerabilities []vulnerabilityInfo, whitelist vulnerabilitiesWhitelist) error {
