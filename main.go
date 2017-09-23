@@ -13,7 +13,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -72,10 +71,13 @@ func parseWhitelist(whitelistFile string) vulnerabilitiesWhitelist {
 }
 
 func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string, scannerIP string) {
-	tmpPath := createTmpPath()
+	//Create a temporary folder where the docker image layers are going to be stored
+	tmpPath := createTmpPath(tmpPrefix)
 	defer os.RemoveAll(tmpPath)
-	interrupt := make(chan os.Signal)
-	signal.Notify(interrupt, os.Interrupt, os.Kill)
+
+	go listenForSignal(func(s os.Signal) {
+		os.Exit(scriptTerminatedByControlC)
+	})
 
 	analyzeCh := make(chan error, 1)
 	go func() {
@@ -83,21 +85,11 @@ func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string
 	}()
 
 	select {
-	case <-interrupt:
-		os.Exit(scriptTerminatedByControlC)
 	case err := <-analyzeCh:
 		if err != nil {
 			os.Exit(generalExit)
 		}
 	}
-}
-
-func createTmpPath() string {
-	tmpPath, err := ioutil.TempDir("", tmpPrefix)
-	if err != nil {
-		log.Fatalf("Could not create temporary folder: %s", err)
-	}
-	return tmpPath
 }
 
 func analyzeImage(imageName string, tmpPath string, clairURL string, scannerIP string, whitelist vulnerabilitiesWhitelist) error {
