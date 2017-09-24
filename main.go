@@ -17,7 +17,7 @@ const (
 
 var (
 	whitelist = vulnerabilitiesWhitelist{}
-	Logger    *logo.Logger
+	logger    *logo.Logger
 )
 
 func main() {
@@ -33,14 +33,14 @@ func main() {
 	)
 
 	app.Before = func() {
-		logger(*logFile)
+		initializeLogger(*logFile)
 		if *whitelistFile != "" {
 			whitelist = parseWhitelistFile(*whitelistFile)
 		}
 	}
 
 	app.Action = func() {
-		Logger.Info("Start clair-scanner")
+		logger.Info("Start clair-scanner")
 
 		go listenForSignal(func(s os.Signal) {
 			log.Fatalf("Application interupted [%v]", s)
@@ -51,7 +51,7 @@ func main() {
 	app.Run(os.Args)
 }
 
-func logger(logFile string) {
+func initializeLogger(logFile string) {
 	cliRec := logo.NewReceiver(os.Stderr, "")
 	cliRec.Color = true
 
@@ -63,8 +63,8 @@ func logger(logFile string) {
 		}
 
 		fileRec := logo.NewReceiver(file, "")
-		Logger = logo.NewLogger(cliRec, fileRec)
+		logger = logo.NewLogger(cliRec, fileRec)
 	} else {
-		Logger = logo.NewLogger(cliRec)
+		logger = logo.NewLogger(cliRec)
 	}
 }

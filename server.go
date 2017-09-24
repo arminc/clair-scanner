@@ -17,6 +17,6 @@ func httpFileServer(path string) *http.Server {
 		server.ListenAndServe()
 	}()
 	time.Sleep(100 * time.Millisecond)
-	Logger.Infof("Server listening on port %s", httpPort)
+	logger.Infof("Server listening on port %s", httpPort)
 	return server
 }

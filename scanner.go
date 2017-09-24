@@ -50,9 +50,9 @@ func scan(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string,
 
 func printReport(imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, file string) {
 	if len(unapproved) > 0 {
-		Logger.Infof("Unaproved vulnerabilities [%s]", unapproved)
+		logger.Infof("Unaproved vulnerabilities [%s]", unapproved)
 	} else {
-		Logger.Infof("Image [%s] not vulnerable", imageName)
+		logger.Infof("Image [%s] not vulnerable", imageName)
 	}
 
 	if file != "" {
@@ -68,10 +68,10 @@ func printReport(imageName string, vulnerabilities []vulnerabilityInfo, unapprov
 func reportToFile(report *vulnerabilityReport, file string) {
 	reportJSON, err := json.MarshalIndent(report, "", "    ")
 	if err != nil {
-		Logger.Fatalf("Could not create a report, report not proper json %v", err)
+		logger.Fatalf("Could not create a report, report not proper json %v", err)
 	}
 	if err = ioutil.WriteFile(file, reportJSON, 0644); err != nil {
-		Logger.Fatalf("Could not create a report, could not write to file %v", err)
+		logger.Fatalf("Could not create a report, could not write to file %v", err)
 	}
 }
 
@@ -80,7 +80,7 @@ func getVulnerabilities(clairURL string, layerIds []string) []vulnerabilityInfo 
 	//Last layer gives you all the vulnerabilities of all layers
 	rawVulnerabilities := fetchLayerVulnerabilities(clairURL, layerIds[len(layerIds)-1])
 	if len(rawVulnerabilities.Features) == 0 {
-		Logger.Fatal("Could not fetch vulnerabilities. No features have been detected in the image. This usually means that the image isn't supported by Clair")
+		logger.Fatal("Could not fetch vulnerabilities. No features have been detected in the image. This usually means that the image isn't supported by Clair")
 	}
 
 	for _, feature := range rawVulnerabilities.Features {

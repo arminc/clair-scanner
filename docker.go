@@ -22,20 +22,20 @@ func saveDockerImage(imageName string, tmpPath string) {
 
 	imageReader, err := docker.ImageSave(context.Background(), []string{imageName})
 	if err != nil {
-		Logger.Fatalf("Could not save Docker image [%v] : %v", imageName, err)
+		logger.Fatalf("Could not save Docker image [%v] : %v", imageName, err)
 	}
 
 	defer imageReader.Close()
 
 	if err = untar(imageReader, tmpPath); err != nil {
-		Logger.Fatalf("Could not save Docker image, could not untar [%v] : %v", imageName, err)
+		logger.Fatalf("Could not save Docker image, could not untar [%v] : %v", imageName, err)
 	}
 }
 
 func createDockerClient() client.APIClient {
 	docker, err := client.NewEnvClient()
 	if err != nil {
-		Logger.Fatalf("Could not create a Docker client: %v", err)
+		logger.Fatalf("Could not create a Docker client: %v", err)
 	}
 	return docker
 }
@@ -55,7 +55,7 @@ func readManifestFile(path string) []manifestJson {
 	manifestFile := path + "/manifest.json"
 	mf, err := os.Open(manifestFile)
 	if err != nil {
-		Logger.Fatalf("Could not read Docker image layers, could not open [%v]: %v", manifestFile, err)
+		logger.Fatalf("Could not read Docker image layers, could not open [%v]: %v", manifestFile, err)
 	}
 	defer mf.Close()
 
@@ -65,11 +65,11 @@ func readManifestFile(path string) []manifestJson {
 func parseAndValidateManifestFile(manifestFile io.Reader) []manifestJson {
 	var manifest []manifestJson
 	if err := json.NewDecoder(manifestFile).Decode(&manifest); err != nil {
-		Logger.Fatalf("Could not read Docker image layers, manifest.json is not json: %v", err)
+		logger.Fatalf("Could not read Docker image layers, manifest.json is not json: %v", err)
 	} else if len(manifest) != 1 {
-		Logger.Fatalf("Could not read Docker image layers, manifest.json is not valid")
+		logger.Fatalf("Could not read Docker image layers, manifest.json is not valid")
 	} else if len(manifest[0].Layers) == 0 {
-		Logger.Fatalf("Could not read Docker image layers, no layers can be found")
+		logger.Fatalf("Could not read Docker image layers, no layers can be found")
 	}
 	return manifest
 }
