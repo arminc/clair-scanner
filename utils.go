@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -29,7 +28,7 @@ func listenForSignal(fn func(os.Signal)) {
 func createTmpPath(tmpPrefix string) string {
 	tmpPath, err := ioutil.TempDir("", tmpPrefix)
 	if err != nil {
-		log.Fatalf("Could not create temporary folder: %s", err)
+		Logger.Fatalf("Could not create temporary folder: %s", err)
 	}
 	return tmpPath
 }
@@ -74,10 +73,10 @@ func parseWhitelistFile(whitelistFile string) vulnerabilitiesWhitelist {
 
 	whitelistBytes, err := ioutil.ReadFile(whitelistFile)
 	if err != nil {
-		log.Fatal("Could not parse whitelist file, could not read file %v", err)
+		Logger.Fatalf("Could not parse whitelist file, could not read file %v", err)
 	}
 	if err = yaml.Unmarshal(whitelistBytes, &whitelistTmp); err != nil {
-		log.Fatalf("Could not parse whitelist file, could not unmarshal %v", err)
+		Logger.Fatalf("Could not parse whitelist file, could not unmarshal %v", err)
 	}
 	return whitelistTmp
 }

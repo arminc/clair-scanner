@@ -14,3 +14,6 @@
 [[constraint]]
   name = "github.com/jawher/mow.cli"
   version = "v1.0.1"
+
+[[constraint]]
+  name = "github.com/mbndr/logo"

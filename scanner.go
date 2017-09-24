@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -45,10 +44,10 @@ func scan(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string,
 	analyzeLayers(layerIds, clairURL, scannerIP)
 	vulnerabilities, err := getVulnerabilities(clairURL, layerIds)
 	if err != nil {
-		log.Fatalf("Analyzing failed: %s", err)
+		Logger.Fatalf("Analyzing failed: %s", err)
 	}
 	if err = vulnerabilitiesApproved(imageName, vulnerabilities, whitelist); err != nil {
-		log.Fatalf("Image contains unapproved vulnerabilities: %s", err)
+		Logger.Fatalf("Image contains unapproved vulnerabilities: %s", err)
 	}
 }
 

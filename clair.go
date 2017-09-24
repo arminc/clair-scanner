@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/coreos/clair/api/v1"
@@ -14,7 +13,7 @@ func analyzeLayers(layerIds []string, clairURL string, scannerIP string) {
 	tmpPath := "http://" + scannerIP + ":" + httpPort
 
 	for i := 0; i < len(layerIds); i++ {
-		log.Printf("Analyzing %s\n", layerIds[i])
+		Logger.Info("Analyzing %s\n", layerIds[i])
 
 		if i > 0 {
 			analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], layerIds[i-1])
@@ -35,24 +34,24 @@ func analyzeLayer(clairURL, path, layerName, parentLayerName string) {
 	}
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
-		log.Fatalf("Could not analyze layer, payload is not json %s", err)
+		Logger.Fatalf("Could not analyze layer, payload is not json %s", err)
 	}
 
 	request, err := http.NewRequest("POST", clairURL+postLayerURI, bytes.NewBuffer(jsonPayload))
 	if err != nil {
-		log.Fatalf("Could not analyze layer, could not prepare request for Clair %s", err)
+		Logger.Fatalf("Could not analyze layer, could not prepare request for Clair %s", err)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		log.Fatalf("Could not analyze layer, POST to Clair failed %s", err)
+		Logger.Fatalf("Could not analyze layer, POST to Clair failed %s", err)
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != 201 {
 		body, _ := ioutil.ReadAll(response.Body)
-		log.Fatalf("Could not analyze layer, Clair responded with a failure: Got response %d with message %s", response.StatusCode, string(body))
+		Logger.Fatalf("Could not analyze layer, Clair responded with a failure: Got response %d with message %s", response.StatusCode, string(body))
 	}
 }
