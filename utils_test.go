@@ -11,10 +11,6 @@ func TestSigint(t *testing.T) {
 	testListenOnSignal(t, syscall.SIGINT)
 }
 
-func TestSigquit(t *testing.T) {
-	testListenOnSignal(t, syscall.SIGQUIT)
-}
-
 func testListenOnSignal(t *testing.T, testSignal syscall.Signal) {
 	done := make(chan bool)
 

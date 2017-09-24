@@ -14,10 +14,9 @@ import (
 
 // listenForSignal listens for interactions and executes the desired code when it happens
 func listenForSignal(fn func(os.Signal)) {
-	signalChannel := make(chan os.Signal)
+	signalChannel := make(chan os.Signal, 0)
 
 	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGQUIT)
-
 	for {
 		execute := <-signalChannel
 		fn(execute)
