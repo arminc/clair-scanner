@@ -18,10 +18,10 @@ func TestMain(m *testing.M) {
 	os.Exit(result)
 }
 
-func TestAlpine(t *testing.T) {
+func TestDebian(t *testing.T) {
 	initializeLogger("")
-	unapproved := scan(scannerConfig{"alpine:3.5", vulnerabilitiesWhitelist{}, "http://127.0.0.1:6060", *ip, ""})
-	if len(unapproved) != 0 {
-		t.Errorf("To many or no CVE's found, expected 0: [%s]", unapproved)
+	unapproved := scan(scannerConfig{"debian:wheezy", vulnerabilitiesWhitelist{}, "http://127.0.0.1:6060", *ip, ""})
+	if len(unapproved) != 62 {
+		t.Errorf("To many or no CVE's found, expected 62: [%v] [%s]", len(unapproved), unapproved)
 	}
 }

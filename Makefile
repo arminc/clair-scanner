@@ -48,6 +48,6 @@ integration: pull dbosx clair
 	go test -ip $(shell ipconfig getifaddr en0) -tags integration
 
 integrationlinux: pull db clair
-	go test -tags integration
+	go test -ip  $(shell hostname --ip-address) -tags integration
 
 release: integrationlinux build cross
