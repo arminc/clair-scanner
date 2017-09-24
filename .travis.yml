@@ -7,7 +7,6 @@ services:
   - docker
 
 install:
-  - ifconfig
   - make install
   - make ensure
   - make docker

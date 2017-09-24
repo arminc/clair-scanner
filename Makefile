@@ -50,7 +50,7 @@ integration: pull dbosx clair
 	go test -v -covermode=count -coverprofile=coverage.out -ip $(shell ipconfig getifaddr en0) -tags integration
 
 integrationlinux: pull db clair
-	go test -v -covermode=count -coverprofile=coverage.out -ip $(shell hostname --ip-address) -tags integration
+	go test -v -covermode=count -coverprofile=coverage.out -ip $(shell ifconfig eth0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1) -tags integration
 
 coverage:
 	goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
