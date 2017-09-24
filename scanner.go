@@ -29,7 +29,7 @@ type scannerConfig struct {
 }
 
 // scan orchestrates the scanning process of an image
-func scan(config scannerConfig) {
+func scan(config scannerConfig) []string {
 	//Create a temporary folder where the docker image layers are going to be stored
 	tmpPath := createTmpPath(tmpPrefix)
 	defer os.RemoveAll(tmpPath)
@@ -48,6 +48,8 @@ func scan(config scannerConfig) {
 	//Check vulnerabilities against whitelist and report
 	unapproved := checkForUnapprovedVulnerabilities(config.imageName, vulnerabilities, config.whitelist)
 	printReport(config.imageName, vulnerabilities, unapproved, config.reportFile)
+
+	return unapproved
 }
 
 // checkForUnapprovedVulnerabilities checks if the found vulnerabilities are approved or not in the whitelist

@@ -1,4 +1,4 @@
-.PHONY : install ensure build docker
+.PHONY : install ensure build docker rmdocker test integration integrationlinux
 
 install:
 	go get -u github.com/golang/dep/cmd/dep
@@ -19,4 +19,35 @@ cross: docker
 clean: 
 	rm -rf dist
 
-release: build cross
+rmdocker: 
+	-docker kill clair
+	-docker kill db
+	-docker rm clair
+	-docker rm db
+
+test:
+	go test
+
+
+pull:
+	docker pull alpine:3.5
+
+dbosx:
+	docker run -p 5432:5432 -d --name db arminc/clair-db:$(shell date -v-1d +%Y-%m-%d)
+	@sleep 5
+
+db: 
+	docker run -p 5432:5432 -d --name db arminc/clair-db:$(shell date -d "-1 day" +%Y-%m-%d)
+	@sleep 5
+
+clair:
+	docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:v2.0.1
+	@sleep 5
+
+integration: pull dbosx clair
+	go test -ip $(shell ipconfig getifaddr en0) -tags integration
+
+integrationlinux: pull db clair
+	go test -tags integration
+
+release: build integrationlinux cross
