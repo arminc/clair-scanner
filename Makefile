@@ -50,4 +50,4 @@ integration: pull dbosx clair
 integrationlinux: pull db clair
 	go test -tags integration
 
-release: build integrationlinux cross
+release: build  cross
