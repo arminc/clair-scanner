@@ -17,6 +17,7 @@ install:
   
 script:
   - make release
+  - goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
 deploy:  
   provider: releases

@@ -52,7 +52,4 @@ integration: pull dbosx clair
 integrationlinux: pull db clair
 	go test -v -covermode=count -coverprofile=coverage.out -ip $(shell ifconfig eth0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1) -tags integration
 
-coverage:
-	goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
-
-release: integrationlinux build coverage cross
+release: integrationlinux build cross
