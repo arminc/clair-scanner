@@ -2,6 +2,8 @@
 
 install:
 	go get -u github.com/golang/dep/cmd/dep
+	go get -u golang.org/x/tools/cmd/cover
+	go get -u github.com/mattn/goveralls
 
 ensure:
 	dep ensure
@@ -45,9 +47,12 @@ clair:
 	@sleep 5
 
 integration: pull dbosx clair
-	go test -ip $(shell ipconfig getifaddr en0) -tags integration
+	go test -v -covermode=count -coverprofile=coverage.out -ip $(shell ipconfig getifaddr en0) -tags integration
 
 integrationlinux: pull db clair
-	go test -ip  $(shell hostname --ip-address) -tags integration
+	go test -v -covermode=count -coverprofile=coverage.out -ip $(shell hostname --ip-address) -tags integration
 
-release: integrationlinux build cross
+coverage:
+	goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+
+release: integrationlinux build coverage cross
