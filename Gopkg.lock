@@ -83,6 +83,12 @@
   revision = "5fc2294e655b78ed8a02082d37808d46c17d7e64"
 
 [[projects]]
+  name = "github.com/jawher/mow.cli"
+  packages = ["."]
+  revision = "a459d5906bb7a9c5eda7c4d02eec7c541120226e"
+  version = "v1.0.1"
+
+[[projects]]
   name = "github.com/julienschmidt/httprouter"
   packages = ["."]
   revision = "21439ef4d70ba4f3e2a5ed9249e7b03af4019b40"
@@ -167,6 +173,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0584d7d1d30097543c26cba4c8e8cf5b98cee52d41054a5712ba8a2b4008bda2"
+  inputs-digest = "835a2265f4645de70922f3b4a56e3a89c373b25c482652aacc77ed594ad28ab4"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -16,16 +15,14 @@ import (
 
 	"github.com/coreos/clair/api/v1"
 	"github.com/fatih/color"
+	cli "github.com/jawher/mow.cli"
 )
 
 const (
-	scriptTerminatedByControlC = 130
-	generalExit                = 1
-	success                    = 0
-	tmpPrefix                  = "clair-scanner-"
-	httpPort                   = 9279
-	postLayerURI               = "/v1/layers"
-	getLayerFeaturesURI        = "/v1/layers/%s?vulnerabilities"
+	tmpPrefix           = "clair-scanner-"
+	httpPort            = 9279
+	postLayerURI        = "/v1/layers"
+	getLayerFeaturesURI = "/v1/layers/%s?vulnerabilities"
 )
 
 type vulnerabilityInfo struct {
@@ -44,24 +41,44 @@ type vulnerabilitiesWhitelist struct {
 	Images           map[string]map[string]string
 }
 
+var (
+	whitelist = vulnerabilitiesWhitelist{}
+)
+
 func main() {
-	log.Print("Start clair-scanner")
-	flag.Parse()
-	start(flag.Args()[0], parseWhitelist(flag.Args()[1]), flag.Args()[2], flag.Args()[3])
-	os.Exit(success)
+	app := cli.App("clair-scanner", "Scan local Docker images for vulnerabilities with Clair")
+
+	var (
+		whitelistFile = app.StringOpt("w whitelist", "", "Path to the whitelist file")
+		clair         = app.StringOpt("c clair", "http://127.0.0.1:6060", "Clair url")
+		ip            = app.StringOpt("ip", "localhost", "IP addres where clair-scanner is running on")
+		imageName     = app.StringArg("IMAGE", "", "Name of the Docker image to scan")
+	)
+
+	app.Before = func() {
+		if *whitelistFile != "" {
+			whitelist = parseWhitelist(*whitelistFile)
+		}
+	}
+
+	app.Action = func() {
+		log.Print("Start clair-scanner")
+		start(*imageName, whitelist, *clair, *ip)
+	}
+	app.Run(os.Args)
 }
 
 func parseWhitelist(whitelistFile string) vulnerabilitiesWhitelist {
-	whitelist := vulnerabilitiesWhitelist{}
+	whitelistTmp := vulnerabilitiesWhitelist{}
+
 	whitelistBytes, err := ioutil.ReadFile(whitelistFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = yaml.Unmarshal(whitelistBytes, &whitelist)
-	if err != nil {
+	if err = yaml.Unmarshal(whitelistBytes, &whitelistTmp); err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	return whitelist
+	return whitelistTmp
 }
 
 func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string, scannerIP string) {
@@ -70,7 +87,7 @@ func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string
 	defer os.RemoveAll(tmpPath)
 
 	go listenForSignal(func(s os.Signal) {
-		os.Exit(scriptTerminatedByControlC)
+		log.Fatalf("Application interupted %v", s)
 	})
 
 	saveDockerImage(imageName, tmpPath)
@@ -85,8 +102,7 @@ func start(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string
 	if err != nil {
 		log.Fatalf("Analyzing failed: %s", err)
 	}
-	err = vulnerabilitiesApproved(imageName, vulnerabilities, whitelist)
-	if err != nil {
+	if err = vulnerabilitiesApproved(imageName, vulnerabilities, whitelist); err != nil {
 		log.Fatalf("Image contains unapproved vulnerabilities: %s", err)
 	}
 }
