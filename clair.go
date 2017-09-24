@@ -6,13 +6,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/coreos/clair/api/v1"
 )
 
 func analyzeLayers(layerIds []string, clairURL string, scannerIP string) {
-	tmpPath := "http://" + scannerIP + ":" + strconv.Itoa(httpPort)
+	tmpPath := "http://" + scannerIP + ":" + httpPort
 
 	for i := 0; i < len(layerIds); i++ {
 		log.Printf("Analyzing %s\n", layerIds[i])

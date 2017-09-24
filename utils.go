@@ -9,6 +9,8 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 // listenForSignal listens for interaptions and exectus the desired code when it happens
@@ -64,4 +66,18 @@ func untar(imageReader io.ReadCloser, target string) error {
 		}
 	}
 	return nil
+}
+
+// TODO make a test
+func parseWhitelistFile(whitelistFile string) vulnerabilitiesWhitelist {
+	whitelistTmp := vulnerabilitiesWhitelist{}
+
+	whitelistBytes, err := ioutil.ReadFile(whitelistFile)
+	if err != nil {
+		log.Fatal("Could not parse whitelist file, could not read file %v", err)
+	}
+	if err = yaml.Unmarshal(whitelistBytes, &whitelistTmp); err != nil {
+		log.Fatalf("Could not parse whitelist file, could not unmarshal %v", err)
+	}
+	return whitelistTmp
 }
