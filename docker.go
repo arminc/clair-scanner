@@ -17,7 +17,7 @@ type manifestJson struct {
 }
 
 // saveDockerImage saves Docker image to temorary folder
-func saveDockerImage(imageName string, tmpPath string) error {
+func saveDockerImage(imageName string, tmpPath string) {
 	docker := createDockerClient()
 
 	imageReader, err := docker.ImageSave(context.Background(), []string{imageName})
@@ -26,7 +26,10 @@ func saveDockerImage(imageName string, tmpPath string) error {
 	}
 
 	defer imageReader.Close()
-	return untar(imageReader, tmpPath)
+
+	if err = untar(imageReader, tmpPath); err != nil {
+		Logger.Fatalf("Could not save Docker image, could not untar [%v] : %v", imageName, err)
+	}
 }
 
 func createDockerClient() client.APIClient {
