@@ -7,20 +7,9 @@ import (
 	"strings"
 )
 
-type vulnerabilityInfo struct {
-	Vulnerability string `json:"vulnerability"`
-	Namespace     string `json:"namespace"`
-	Severity      string `json:"severity"`
-}
-
-type acceptedVulnerability struct {
-	Cve         string
-	Description string
-}
-
 type vulnerabilitiesWhitelist struct {
-	GeneralWhitelist map[string]string
-	Images           map[string]map[string]string
+	GeneralWhitelist map[string]string            //[key: CVE and value: CVE description]
+	Images           map[string]map[string]string // image name with [key: CVE and value: CVE description]
 }
 
 type vulnerabilityReport struct {
@@ -29,28 +18,79 @@ type vulnerabilityReport struct {
 	Vulnerabilities []vulnerabilityInfo `json:"vulnerabilities"`
 }
 
-func scan(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string, scannerIP string, reportFile string) {
+const tmpPrefix = "clair-scanner-"
+
+type scannerConfig struct {
+	imageName  string
+	whitelist  vulnerabilitiesWhitelist
+	clairURL   string
+	scannerIP  string
+	reportFile string
+}
+
+// scan orchestrates the scanning process of an image
+func scan(config scannerConfig) {
 	//Create a temporary folder where the docker image layers are going to be stored
 	tmpPath := createTmpPath(tmpPrefix)
 	defer os.RemoveAll(tmpPath)
 
-	saveDockerImage(imageName, tmpPath)
+	saveDockerImage(config.imageName, tmpPath)
 	layerIds := getImageLayerIds(tmpPath)
 
 	//Start a server that can serve Docker image layers to Clair
 	server := httpFileServer(tmpPath)
 	defer server.Shutdown(nil)
 
-	analyzeLayers(layerIds, clairURL, scannerIP)
-	vulnerabilities := getVulnerabilities(clairURL, layerIds)
+	//Analyze the layers
+	analyzeLayers(layerIds, config.clairURL, config.scannerIP)
+	vulnerabilities := getVulnerabilities(config.clairURL, layerIds)
 
-	unapproved := vulnerabilitiesApproved(imageName, vulnerabilities, whitelist)
-	printReport(imageName, vulnerabilities, unapproved, reportFile)
+	//Check vulnerabilities against whitelist and report
+	unapproved := checkForUnapprovedVulnerabilities(config.imageName, vulnerabilities, config.whitelist)
+	printReport(config.imageName, vulnerabilities, unapproved, config.reportFile)
 }
 
+// checkForUnapprovedVulnerabilities checks if the found vulnerabilities are approved or not in the whitelist
+func checkForUnapprovedVulnerabilities(imageName string, vulnerabilities []vulnerabilityInfo, whitelist vulnerabilitiesWhitelist) []string {
+	unapproved := []string{}
+	imageVulnerabilities := getImageVulnerabilities(imageName, whitelist.Images)
+
+	for i := 0; i < len(vulnerabilities); i++ {
+		vulnerability := vulnerabilities[i].Vulnerability
+		vulnerable := true
+
+		//Check if the vulnerability exists in the GeneralWhitelist
+		if _, exists := whitelist.GeneralWhitelist[vulnerability]; exists {
+			vulnerable = false
+		}
+
+		//If not in GeneralWhitelist check if the vulnerability exists in the imageVulnerabilities
+		if vulnerable && len(imageVulnerabilities) > 0 {
+			if _, exists := imageVulnerabilities[vulnerability]; exists {
+				vulnerable = false
+			}
+		}
+		if vulnerable {
+			unapproved = append(unapproved, vulnerability)
+		}
+	}
+	return unapproved
+}
+
+// getImageVulnerabilities returns image specific whitelist of vulnerabilities from whitelistImageVulnerabilities
+func getImageVulnerabilities(imageName string, whitelistImageVulnerabilities map[string]map[string]string) map[string]string {
+	var imageVulnerabilities map[string]string
+	imageWithoutVersion := strings.Split(imageName, ":") // TODO there is a bug here if it is a private registry with a custom port registry:777/ubuntu:tag
+	if val, exists := whitelistImageVulnerabilities[imageWithoutVersion[0]]; exists {
+		imageVulnerabilities = val
+	}
+	return imageVulnerabilities
+}
+
+// printReport shows the unapproved vulnerabilities and writes a report to file
 func printReport(imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, file string) {
 	if len(unapproved) > 0 {
-		logger.Infof("Unaproved vulnerabilities [%s]", unapproved)
+		logger.Infof("Unapproved vulnerabilities [%s]", unapproved)
 	} else {
 		logger.Infof("Image [%s] not vulnerable", imageName)
 	}
@@ -65,63 +105,13 @@ func printReport(imageName string, vulnerabilities []vulnerabilityInfo, unapprov
 	}
 }
 
+// reportToFile writes the report to file
 func reportToFile(report *vulnerabilityReport, file string) {
 	reportJSON, err := json.MarshalIndent(report, "", "    ")
 	if err != nil {
-		logger.Fatalf("Could not create a report, report not proper json %v", err)
+		logger.Fatalf("Could not create a report: report is not proper JSON %v", err)
 	}
 	if err = ioutil.WriteFile(file, reportJSON, 0644); err != nil {
-		logger.Fatalf("Could not create a report, could not write to file %v", err)
+		logger.Fatalf("Could not create a report: could not write to file %v", err)
 	}
-}
-
-func getVulnerabilities(clairURL string, layerIds []string) []vulnerabilityInfo {
-	var vulnerabilities = make([]vulnerabilityInfo, 0)
-	//Last layer gives you all the vulnerabilities of all layers
-	rawVulnerabilities := fetchLayerVulnerabilities(clairURL, layerIds[len(layerIds)-1])
-	if len(rawVulnerabilities.Features) == 0 {
-		logger.Fatal("Could not fetch vulnerabilities. No features have been detected in the image. This usually means that the image isn't supported by Clair")
-	}
-
-	for _, feature := range rawVulnerabilities.Features {
-		if len(feature.Vulnerabilities) > 0 {
-			for _, vulnerability := range feature.Vulnerabilities {
-				vulnerability := vulnerabilityInfo{vulnerability.Name, vulnerability.NamespaceName, vulnerability.Severity}
-				vulnerabilities = append(vulnerabilities, vulnerability)
-			}
-		}
-	}
-	return vulnerabilities
-}
-
-func vulnerabilitiesApproved(imageName string, vulnerabilities []vulnerabilityInfo, whitelist vulnerabilitiesWhitelist) []string {
-	unapproved := []string{}
-	imageVulnerabilities := getImageVulnerabilities(imageName, whitelist.Images)
-
-	for i := 0; i < len(vulnerabilities); i++ {
-		vulnerability := vulnerabilities[i].Vulnerability
-		vulnerable := true
-
-		if _, exists := whitelist.GeneralWhitelist[vulnerability]; exists {
-			vulnerable = false
-		}
-		if vulnerable && len(imageVulnerabilities) > 0 {
-			if _, exists := imageVulnerabilities[vulnerability]; exists {
-				vulnerable = false
-			}
-		}
-		if vulnerable {
-			unapproved = append(unapproved, vulnerability)
-		}
-	}
-	return unapproved
-}
-
-func getImageVulnerabilities(imageName string, whitelistImageVulnerabilities map[string]map[string]string) map[string]string {
-	var imageVulnerabilities map[string]string
-	imageWithoutVersion := strings.Split(imageName, ":")
-	if val, exists := whitelistImageVulnerabilities[imageWithoutVersion[0]]; exists {
-		imageVulnerabilities = val
-	}
-	return imageVulnerabilities
 }

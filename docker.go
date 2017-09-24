@@ -12,7 +12,7 @@ import (
 
 // TODO Add support for older version of docker
 
-type manifestJson struct {
+type manifestJSON struct {
 	Layers []string
 }
 
@@ -22,13 +22,13 @@ func saveDockerImage(imageName string, tmpPath string) {
 
 	imageReader, err := docker.ImageSave(context.Background(), []string{imageName})
 	if err != nil {
-		logger.Fatalf("Could not save Docker image [%v] : %v", imageName, err)
+		logger.Fatalf("Could not save Docker image [%s]: %v", imageName, err)
 	}
 
 	defer imageReader.Close()
 
 	if err = untar(imageReader, tmpPath); err != nil {
-		logger.Fatalf("Could not save Docker image, could not untar [%v] : %v", imageName, err)
+		logger.Fatalf("Could not save Docker image: could not untar [%s]: %v", imageName, err)
 	}
 }
 
@@ -40,7 +40,7 @@ func createDockerClient() client.APIClient {
 	return docker
 }
 
-// TODO make a test
+// getImageLayerIds reads LayerIDs from the manifest.json file
 func getImageLayerIds(path string) []string {
 	manifest := readManifestFile(path)
 
@@ -51,25 +51,27 @@ func getImageLayerIds(path string) []string {
 	return layers
 }
 
-func readManifestFile(path string) []manifestJson {
+// readManifestFile reads the local manifest.json
+func readManifestFile(path string) []manifestJSON {
 	manifestFile := path + "/manifest.json"
 	mf, err := os.Open(manifestFile)
 	if err != nil {
-		logger.Fatalf("Could not read Docker image layers, could not open [%v]: %v", manifestFile, err)
+		logger.Fatalf("Could not read Docker image layers: could not open [%s]: %v", manifestFile, err)
 	}
 	defer mf.Close()
 
 	return parseAndValidateManifestFile(mf)
 }
 
-func parseAndValidateManifestFile(manifestFile io.Reader) []manifestJson {
-	var manifest []manifestJson
+// parseAndValidateManifestFile parses the manifest.json file and validates it
+func parseAndValidateManifestFile(manifestFile io.Reader) []manifestJSON {
+	var manifest []manifestJSON
 	if err := json.NewDecoder(manifestFile).Decode(&manifest); err != nil {
-		logger.Fatalf("Could not read Docker image layers, manifest.json is not json: %v", err)
+		logger.Fatalf("Could not read Docker image layers: manifest.json is not json: %v", err)
 	} else if len(manifest) != 1 {
-		logger.Fatalf("Could not read Docker image layers, manifest.json is not valid")
+		logger.Fatalf("Could not read Docker image layers: manifest.json is not valid")
 	} else if len(manifest[0].Layers) == 0 {
-		logger.Fatalf("Could not read Docker image layers, no layers can be found")
+		logger.Fatalf("Could not read Docker image layers: no layers can be found")
 	}
 	return manifest
 }

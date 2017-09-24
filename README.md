@@ -103,9 +103,10 @@ Arguments:
 
 Options:
   -w, --whitelist=""                    Path to the whitelist file
-  -c, --clair="http://127.0.0.1:6060"   Clair url
-  --ip="localhost"                      IP addres where clair-scanner is running on
+  -c, --clair="http://127.0.0.1:6060"   Clair URL
+  --ip="localhost"                      IP address where clair-scanner is running on
   -l, --log=""                          Log to a file
+  -r, --report=""                       Report output file, as JSON
 ```
 
 ## Example whitelist yaml file

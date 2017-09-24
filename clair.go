@@ -10,6 +10,18 @@ import (
 	"github.com/coreos/clair/api/v1"
 )
 
+const (
+	postLayerURI        = "/v1/layers"
+	getLayerFeaturesURI = "/v1/layers/%s?vulnerabilities"
+)
+
+type vulnerabilityInfo struct {
+	Vulnerability string `json:"vulnerability"`
+	Namespace     string `json:"namespace"`
+	Severity      string `json:"severity"`
+}
+
+// analyzeLayer tells Clair which layers to analyze
 func analyzeLayers(layerIds []string, clairURL string, scannerIP string) {
 	tmpPath := "http://" + scannerIP + ":" + httpPort
 
@@ -24,6 +36,7 @@ func analyzeLayers(layerIds []string, clairURL string, scannerIP string) {
 	}
 }
 
+// analyzeLayer pushes the required information to Clair to scan the layer
 func analyzeLayer(clairURL, path, layerName, parentLayerName string) {
 	payload := v1.LayerEnvelope{
 		Layer: &v1.Layer{
@@ -35,28 +48,49 @@ func analyzeLayer(clairURL, path, layerName, parentLayerName string) {
 	}
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
-		logger.Fatalf("Could not analyze layer, payload is not json %s", err)
+		logger.Fatalf("Could not analyze layer: payload is not JSON %v", err)
 	}
 
 	request, err := http.NewRequest("POST", clairURL+postLayerURI, bytes.NewBuffer(jsonPayload))
 	if err != nil {
-		logger.Fatalf("Could not analyze layer, could not prepare request for Clair %s", err)
+		logger.Fatalf("Could not analyze layer: could not prepare request for Clair %v", err)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		logger.Fatalf("Could not analyze layer, POST to Clair failed %s", err)
+		logger.Fatalf("Could not analyze layer: POST to Clair failed %v", err)
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != 201 {
 		body, _ := ioutil.ReadAll(response.Body)
-		logger.Fatalf("Could not analyze layer, Clair responded with a failure: Got response %d with message %s", response.StatusCode, string(body))
+		logger.Fatalf("Could not analyze layer: Clair responded with a failure: Got response %d with message %s", response.StatusCode, string(body))
 	}
 }
 
+// getVulnerabilities fetches vulnerabilities from Clair and extracts the required information
+func getVulnerabilities(clairURL string, layerIds []string) []vulnerabilityInfo {
+	var vulnerabilities = make([]vulnerabilityInfo, 0)
+	//Last layer gives you all the vulnerabilities of all layers
+	rawVulnerabilities := fetchLayerVulnerabilities(clairURL, layerIds[len(layerIds)-1])
+	if len(rawVulnerabilities.Features) == 0 {
+		logger.Fatal("Could not fetch vulnerabilities. No features have been detected in the image. This usually means that the image isn't supported by Clair")
+	}
+
+	for _, feature := range rawVulnerabilities.Features {
+		if len(feature.Vulnerabilities) > 0 {
+			for _, vulnerability := range feature.Vulnerabilities {
+				vulnerability := vulnerabilityInfo{vulnerability.Name, vulnerability.NamespaceName, vulnerability.Severity}
+				vulnerabilities = append(vulnerabilities, vulnerability)
+			}
+		}
+	}
+	return vulnerabilities
+}
+
+// fetchLayerVulnerabilities fetches vulnerabilities from Clair
 func fetchLayerVulnerabilities(clairURL string, layerID string) v1.Layer {
 	response, err := http.Get(clairURL + fmt.Sprintf(getLayerFeaturesURI, layerID))
 	if err != nil {

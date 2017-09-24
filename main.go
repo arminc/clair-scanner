@@ -9,12 +9,6 @@ import (
 	"github.com/mbndr/logo"
 )
 
-const (
-	tmpPrefix           = "clair-scanner-"
-	postLayerURI        = "/v1/layers"
-	getLayerFeaturesURI = "/v1/layers/%s?vulnerabilities"
-)
-
 var (
 	whitelist = vulnerabilitiesWhitelist{}
 	logger    *logo.Logger
@@ -25,10 +19,10 @@ func main() {
 
 	var (
 		whitelistFile = app.StringOpt("w whitelist", "", "Path to the whitelist file")
-		clair         = app.StringOpt("c clair", "http://127.0.0.1:6060", "Clair url")
-		ip            = app.StringOpt("ip", "localhost", "IP addres where clair-scanner is running on")
+		clair         = app.StringOpt("c clair", "http://127.0.0.1:6060", "Clair URL")
+		ip            = app.StringOpt("ip", "localhost", "IP address where clair-scanner is running on")
 		logFile       = app.StringOpt("l log", "", "Log to a file")
-		reportFile    = app.StringOpt("r report", "", "Report output file, as json")
+		reportFile    = app.StringOpt("r report", "", "Report output file, as JSON")
 		imageName     = app.StringArg("IMAGE", "", "Name of the Docker image to scan")
 	)
 
@@ -43,10 +37,10 @@ func main() {
 		logger.Info("Start clair-scanner")
 
 		go listenForSignal(func(s os.Signal) {
-			log.Fatalf("Application interupted [%v]", s)
+			log.Fatalf("Application interrupted [%v]", s)
 		})
 
-		scan(*imageName, whitelist, *clair, *ip, *reportFile)
+		scan(scannerConfig{*imageName, whitelist, *clair, *ip, *reportFile})
 	}
 	app.Run(os.Args)
 }

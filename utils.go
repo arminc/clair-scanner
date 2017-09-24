@@ -12,7 +12,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// listenForSignal listens for interaptions and exectus the desired code when it happens
+// listenForSignal listens for interactions and executes the desired code when it happens
 func listenForSignal(fn func(os.Signal)) {
 	signalChannel := make(chan os.Signal)
 
@@ -24,7 +24,7 @@ func listenForSignal(fn func(os.Signal)) {
 	}
 }
 
-// createTmpPath creates an temporary folder with an prefix
+// createTmpPath creates a temporary folder with a prefix
 func createTmpPath(tmpPrefix string) string {
 	tmpPath, err := ioutil.TempDir("", tmpPrefix)
 	if err != nil {
@@ -34,7 +34,6 @@ func createTmpPath(tmpPrefix string) string {
 }
 
 // untar uses a Reader that represents a tar to untar it on the fly to a target folder
-// TODO make a test
 func untar(imageReader io.ReadCloser, target string) error {
 	tarReader := tar.NewReader(imageReader)
 
@@ -67,7 +66,7 @@ func untar(imageReader io.ReadCloser, target string) error {
 	return nil
 }
 
-// TODO make a test
+// parseWhitelistFile reads the whitelist file and parses it
 func parseWhitelistFile(whitelistFile string) vulnerabilitiesWhitelist {
 	whitelistTmp := vulnerabilitiesWhitelist{}
 
