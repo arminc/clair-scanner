@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -54,4 +55,26 @@ func analyzeLayer(clairURL, path, layerName, parentLayerName string) {
 		body, _ := ioutil.ReadAll(response.Body)
 		Logger.Fatalf("Could not analyze layer, Clair responded with a failure: Got response %d with message %s", response.StatusCode, string(body))
 	}
+}
+
+func fetchLayerVulnerabilities(clairURL string, layerID string) v1.Layer {
+	response, err := http.Get(clairURL + fmt.Sprintf(getLayerFeaturesURI, layerID))
+	if err != nil {
+		Logger.Fatalf("Fetch vulnerabilities, Clair responded with a failure %v", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		body, _ := ioutil.ReadAll(response.Body)
+		Logger.Fatalf("Fetch vulnerabilities, Clair responded with a failure: Got response %d with message %s", response.StatusCode, string(body))
+	}
+
+	var apiResponse v1.LayerEnvelope
+	if err = json.NewDecoder(response.Body).Decode(&apiResponse); err != nil {
+		Logger.Fatalf("Fetch vulnerabilities, Could not decode response %v", err)
+	} else if apiResponse.Error != nil {
+		Logger.Fatalf("Fetch vulnerabilities, Response contains errors %s", apiResponse.Error.Message)
+	}
+
+	return *apiResponse.Layer
 }

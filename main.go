@@ -28,6 +28,7 @@ func main() {
 		clair         = app.StringOpt("c clair", "http://127.0.0.1:6060", "Clair url")
 		ip            = app.StringOpt("ip", "localhost", "IP addres where clair-scanner is running on")
 		logFile       = app.StringOpt("l log", "", "Log to a file")
+		reportFile    = app.StringOpt("r report", "", "Report output file, as json")
 		imageName     = app.StringArg("IMAGE", "", "Name of the Docker image to scan")
 	)
 
@@ -45,7 +46,7 @@ func main() {
 			log.Fatalf("Application interupted [%v]", s)
 		})
 
-		scan(*imageName, whitelist, *clair, *ip)
+		scan(*imageName, whitelist, *clair, *ip, *reportFile)
 	}
 	app.Run(os.Args)
 }
