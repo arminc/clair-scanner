@@ -49,6 +49,7 @@ func scan(imageName string, whitelist vulnerabilitiesWhitelist, clairURL string,
 	if err = vulnerabilitiesApproved(imageName, vulnerabilities, whitelist); err != nil {
 		Logger.Fatalf("Image contains unapproved vulnerabilities: %s", err)
 	}
+	Logger.Infof("Image [%s] not vulnerable", imageName)
 }
 
 func vulnerabilitiesApproved(imageName string, vulnerabilities []vulnerabilityInfo, whitelist vulnerabilitiesWhitelist) error {

@@ -13,7 +13,7 @@ func analyzeLayers(layerIds []string, clairURL string, scannerIP string) {
 	tmpPath := "http://" + scannerIP + ":" + httpPort
 
 	for i := 0; i < len(layerIds); i++ {
-		Logger.Info("Analyzing %s\n", layerIds[i])
+		Logger.Infof("Analyzing %s", layerIds[i])
 
 		if i > 0 {
 			analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], layerIds[i-1])
