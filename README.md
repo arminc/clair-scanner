@@ -128,4 +128,4 @@ images:
 
 ## Release
 
-To make a release create a tag and push it
+To make a release create a tag and push it.
