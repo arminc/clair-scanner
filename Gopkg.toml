@@ -2,11 +2,7 @@
 
 [[constraint]]
   name = "github.com/coreos/clair"
-  version = "2.0.0-rc.0"
-
-[[constraint]]
-  name = "github.com/fatih/color"
-  version = "1.0.0"
+  version = "2.0.1"
 
 [[constraint]]
   name = "gopkg.in/yaml.v2"
