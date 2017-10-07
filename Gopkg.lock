@@ -4,72 +4,56 @@
 [[projects]]
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
-  revision = "fff283ad5116362ca252298cfc9b95828956d85d"
-  version = "v0.3.8"
+  revision = "78439966b38d69bf38227fbf57ac8a6fee70f69a"
+  version = "v0.4.5"
 
 [[projects]]
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  revision = "10f801ebc38b33738c9d17d50860f484a0988ff5"
-
-[[projects]]
+  branch = "master"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
-  revision = "b965b613227fddccbfffe13eae360ed3fa822f8d"
+  revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
 
 [[projects]]
   name = "github.com/coreos/clair"
   packages = [".","api/v1","database","ext/featurefmt","ext/featurens","ext/imagefmt","ext/notification","ext/versionfmt","ext/vulnmdsrc","ext/vulnsrc","pkg/commonerr","pkg/stopper","pkg/tarutil"]
-  revision = "8bc9183db3beb8704e4109c582cfeaa0b86e7abf"
-  version = "v2.0.0-rc.0"
-
-[[projects]]
-  name = "github.com/coreos/go-systemd"
-  packages = ["journal"]
-  revision = "4f14f6deef2da87e4aa59e6c1c1f3e02ba44c5e1"
+  revision = "b2519a044a7e5ed78e3edafe22a955fb1a189a4e"
+  version = "v2.0.1"
 
 [[projects]]
   name = "github.com/coreos/pkg"
-  packages = ["capnslog","timeutil"]
-  revision = "2c77715c4df99b5420ffcae14ead08f52104065d"
+  packages = ["timeutil"]
+  revision = "3ac0863d7acf3bc44daf49afef8919af12f704ef"
+  version = "v3"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
-  revision = "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/docker/distribution"
-  packages = ["digestset","reference"]
-  revision = "08b06dc023674763e7b36d404cf0c7664cee1f5e"
+  packages = ["digest","reference"]
+  revision = "48294d928ced5dd9b378f7fd7c6f5da3ff3f2c89"
+  version = "v2.6.2"
 
 [[projects]]
   name = "github.com/docker/docker"
-  packages = ["api","api/types","api/types/blkiodev","api/types/container","api/types/events","api/types/filters","api/types/image","api/types/mount","api/types/network","api/types/registry","api/types/strslice","api/types/swarm","api/types/time","api/types/versions","api/types/volume","client","pkg/ioutils","pkg/longpath","pkg/system","pkg/tlsconfig"]
-  revision = "04da4041757370fb6f85510c8977c5a18ddae380"
+  packages = ["api/types","api/types/blkiodev","api/types/container","api/types/events","api/types/filters","api/types/mount","api/types/network","api/types/reference","api/types/registry","api/types/strslice","api/types/swarm","api/types/time","api/types/versions","api/types/volume","client","pkg/tlsconfig"]
+  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
+  version = "v1.13.1"
 
 [[projects]]
   name = "github.com/docker/go-connections"
   packages = ["nat","sockets","tlsconfig"]
-  revision = "a2afab9802043837035592f1c24827fb70766de9"
+  revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
+  version = "v0.3.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/docker/go-units"
   packages = ["."]
   revision = "0dadbb0345b35ec7ef35e228dabb8de89a65bf52"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/docker/libtrust"
-  packages = ["."]
-  revision = "aabc10ec26b754e797f9028f4589c5b7bd90dc20"
-
-[[projects]]
-  name = "github.com/fatih/color"
-  packages = ["."]
-  revision = "87d4004f2ab62d0d255e0a38f1680aa534549fe3"
-  version = "v1.0.0"
+  version = "v0.3.2"
 
 [[projects]]
   branch = "master"
@@ -78,101 +62,116 @@
   revision = "1b2437bc582b3cfbb341ee5a29f8ef5b42912ff2"
 
 [[projects]]
+  branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "5fc2294e655b78ed8a02082d37808d46c17d7e64"
+  revision = "130e6b02ab059e7b717a096f397c5b60111cae74"
 
 [[projects]]
   name = "github.com/jawher/mow.cli"
   packages = ["."]
-  revision = "a459d5906bb7a9c5eda7c4d02eec7c541120226e"
-  version = "v1.0.1"
+  revision = "89bd73e5017374498afb615659500c3559ff42b3"
+  version = "v1.0.2"
 
 [[projects]]
   name = "github.com/julienschmidt/httprouter"
   packages = ["."]
-  revision = "21439ef4d70ba4f3e2a5ed9249e7b03af4019b40"
-
-[[projects]]
-  name = "github.com/mattn/go-colorable"
-  packages = ["."]
-  revision = "ded68f7a9561c023e790de24279db7ebf473ea80"
-
-[[projects]]
-  name = "github.com/mattn/go-isatty"
-  packages = ["."]
-  revision = "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
-  version = "v0.0.2"
+  revision = "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
+  version = "v1.1"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
-  revision = "d0c3fe89de86839aecf2e0579c40ba3bb336a453"
+  revision = "3247c84500bff8d9fb6d579d800f20b3e091582c"
+  version = "v1.0.0"
 
 [[projects]]
-  name = "github.com/opencontainers/go-digest"
+  branch = "master"
+  name = "github.com/mbndr/logo"
   packages = ["."]
-  revision = "aa2ec055abd10d26d539eb630a92241b781ce4bc"
-  version = "v1.0.0-rc0"
+  revision = "2cf79af92583dac1e32304d4eb833e8be68aa1e7"
 
 [[projects]]
   name = "github.com/pborman/uuid"
   packages = ["."]
-  revision = "dee7705ef7b324f27ceb85a121c61f2c2e8ce988"
+  revision = "e790cca94e6cc75c7064b1332e63811d4aae1a53"
+  version = "v1.1"
 
 [[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
-  revision = "ff09b135c25aae272398c51a07235b90a75aa4f0"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
-  revision = "e8554b8641db39598be7f6342874b958f12ae1d4"
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/prometheus/client_golang"
   packages = ["prometheus"]
-  revision = "67994f177195311c3ea3d4407ed0175e34a4256f"
+  revision = "c5b7fccd204277076155f10851dad72b76a49317"
+  version = "v0.8.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/prometheus/client_model"
   packages = ["go"]
-  revision = "fa8ad6fec33561be4280a8f0514318c79d7f6cb6"
+  revision = "6f3806018612930941127f2a7c6c453ba2c527d2"
 
 [[projects]]
+  branch = "master"
   name = "github.com/prometheus/common"
   packages = ["expfmt","internal/bitbucket.org/ww/goautoneg","model"]
-  revision = "dba5e39d4516169e840def50e507ef5f21b985f9"
+  revision = "1bab55dd05dbff384524a6a1c99006d9eb5f139b"
 
 [[projects]]
+  branch = "master"
   name = "github.com/prometheus/procfs"
+  packages = [".","xfs"]
+  revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "406e5b7bfd8201a36e2bb5f7bdae0b03380c2ce8"
+  revision = "f006c2ac4710855cf0f916dd6b77acf6b048dc6e"
+  version = "v1.0.3"
 
 [[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
-  revision = "5b9da39b66e8e994455c2525c4421c8cc00a7f93"
+  revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
+  version = "v1.1.4"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  revision = "9419663f5a44be8b34ca85f08abc5fe1be11f8a3"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/net"
   packages = ["context","context/ctxhttp","proxy"]
-  revision = "1d7a0b2100da090d8b02afcfb42f97e2c77e71a4"
+  revision = "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9"
+  revision = "ebfc5b4631820b793c9010c87fd8fef0f39eb082"
 
 [[projects]]
+  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "a3f3340b5840cee44f372bddb5880fcbc419b46a"
+  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "835a2265f4645de70922f3b4a56e3a89c373b25c482652aacc77ed594ad28ab4"
+  inputs-digest = "7ba7480a16931e90fab3838caa543c08a95644e0db201d54ac29dc20da5cc5e1"
   solver-name = "gps-cdcl"
   solver-version = 1
