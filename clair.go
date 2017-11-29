@@ -16,9 +16,14 @@ const (
 )
 
 type vulnerabilityInfo struct {
-	Vulnerability string `json:"vulnerability"`
-	Namespace     string `json:"namespace"`
-	Severity      string `json:"severity"`
+	FeatureName    string `json:"featurename"`
+	FeatureVersion string `json:"featureversion"`
+	Vulnerability  string `json:"vulnerability"`
+	Namespace      string `json:"namespace"`
+	Description    string `json:"description"`
+	Link           string `json:"link"`
+	Severity       string `json:"severity"`
+	FixedBy        string `json:"fixedby"`
 }
 
 // analyzeLayer tells Clair which layers to analyze
@@ -82,7 +87,7 @@ func getVulnerabilities(clairURL string, layerIds []string) []vulnerabilityInfo 
 	for _, feature := range rawVulnerabilities.Features {
 		if len(feature.Vulnerabilities) > 0 {
 			for _, vulnerability := range feature.Vulnerabilities {
-				vulnerability := vulnerabilityInfo{vulnerability.Name, vulnerability.NamespaceName, vulnerability.Severity}
+				vulnerability := vulnerabilityInfo{feature.Name, feature.Version, vulnerability.Name, vulnerability.NamespaceName, vulnerability.Description, vulnerability.Link, vulnerability.Severity, vulnerability.FixedBy}
 				vulnerabilities = append(vulnerabilities, vulnerability)
 			}
 		}
