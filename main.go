@@ -40,10 +40,7 @@ func main() {
 			log.Fatalf("Application interrupted [%v]", s)
 		})
 
-		result := scan(scannerConfig{*imageName, whitelist, *clair, *ip, *reportFile})
-		if len(result) > 0 {
-			os.Exit(1)
-		}
+		scan(scannerConfig{*imageName, whitelist, *clair, *ip, *reportFile})
 	}
 	app.Run(os.Args)
 }
