@@ -39,7 +39,7 @@ The clair-scanner is a copy of the Clair 'analyze-local-images' <https://github.
 
 ## Build
 
-clair-scanner is built with Go 1.9 and uses `dep` as dependencies manager. Use the Makefile to build and install dependencies.
+clair-scanner is built with Go 1.9 and uses [dep](https://github.com/golang/dep) as dependencies manager. Use the Makefile to build and install dependencies.
 
 ```bash
 make ensure && make build
