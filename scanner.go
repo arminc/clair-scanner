@@ -14,7 +14,7 @@ type vulnerabilitiesWhitelist struct {
 
 type vulnerabilityReport struct {
 	Image           string              `json:"image"`
-	Unaproved       []string            `json:"unaproved"`
+	Unaproved       []string            `json:"unapproved"`
 	Vulnerabilities []vulnerabilityInfo `json:"vulnerabilities"`
 }
 
