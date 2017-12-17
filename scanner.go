@@ -14,7 +14,7 @@ type vulnerabilitiesWhitelist struct {
 
 type vulnerabilityReport struct {
 	Image           string              `json:"image"`
-	Unaproved       []string            `json:"unaproved"`
+	Unapproved       []string           `json:"unapproved"`
 	Vulnerabilities []vulnerabilityInfo `json:"vulnerabilities"`
 }
 
@@ -101,7 +101,7 @@ func printReport(imageName string, vulnerabilities []vulnerabilityInfo, unapprov
 		report := &vulnerabilityReport{
 			Image:           imageName,
 			Vulnerabilities: vulnerabilities,
-			Unaproved:       unapproved,
+			Unapproved:       unapproved,
 		}
 		reportToFile(report, file)
 	}
