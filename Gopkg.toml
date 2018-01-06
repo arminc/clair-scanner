@@ -13,3 +13,6 @@
 
 [[constraint]]
   name = "github.com/mbndr/logo"
+
+[[constraint]]
+  name = "github.com/olekukonko/tablewriter"

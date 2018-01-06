@@ -80,6 +80,12 @@
   version = "v1.1"
 
 [[projects]]
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
+  version = "v0.0.2"
+
+[[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
   revision = "3247c84500bff8d9fb6d579d800f20b3e091582c"
@@ -90,6 +96,12 @@
   name = "github.com/mbndr/logo"
   packages = ["."]
   revision = "2cf79af92583dac1e32304d4eb833e8be68aa1e7"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/olekukonko/tablewriter"
+  packages = ["."]
+  revision = "96aac992fc8b1a4c83841a6c3e7178d20d989625"
 
 [[projects]]
   name = "github.com/pborman/uuid"
@@ -172,6 +184,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8675c78bfe80feb5da58258a95753a735ca81b8fa304648e7fa1994db3ad1a77"
+  inputs-digest = "197187947850b0ee9e0264ef2d4a6c150c29dc51f85040947ffbf50e3daf3c3b"
   solver-name = "gps-cdcl"
   solver-version = 1

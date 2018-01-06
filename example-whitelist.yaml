@@ -4,6 +4,6 @@ generalwhitelist:
 images:
   ubuntu:
     CVE-2017-5230: Java
-    CVE-2017-5230: XSX  
+    CVE-2017-5230: XSX
   alpine:
     CVE-2017-3261: SE

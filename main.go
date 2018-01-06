@@ -18,12 +18,14 @@ func main() {
 	app := cli.App("clair-scanner", "Scan local Docker images for vulnerabilities with Clair")
 
 	var (
-		whitelistFile = app.StringOpt("w whitelist", "", "Path to the whitelist file")
-		clair         = app.StringOpt("c clair", "http://127.0.0.1:6060", "Clair URL")
-		ip            = app.StringOpt("ip", "localhost", "IP address where clair-scanner is running on")
-		logFile       = app.StringOpt("l log", "", "Log to a file")
-		reportFile    = app.StringOpt("r report", "", "Report output file, as JSON")
-		imageName     = app.StringArg("IMAGE", "", "Name of the Docker image to scan")
+		whitelistFile      = app.StringOpt("w whitelist", "", "Path to the whitelist file")
+		whitelistThreshold = app.StringOpt("t threshold", "Unknown", "CVE severity threshold. Valid values; 'Defcon1', 'Critical', 'High', 'Medium', 'Low', 'Negligible', 'Unknown'")
+		clair              = app.StringOpt("c clair", "http://127.0.0.1:6060", "Clair URL")
+		ip                 = app.StringOpt("ip", "localhost", "IP address where clair-scanner is running on")
+		logFile            = app.StringOpt("l log", "", "Log to a file")
+		reportAll          = app.BoolOpt("all reportAll", true, "Display all vulnerabilities, even if they are approved")
+		reportFile         = app.StringOpt("r report", "", "Report output file, as JSON")
+		imageName          = app.StringArg("IMAGE", "", "Name of the Docker image to scan")
 	)
 
 	app.Before = func() {
@@ -31,6 +33,7 @@ func main() {
 		if *whitelistFile != "" {
 			whitelist = parseWhitelistFile(*whitelistFile)
 		}
+		validateThreshold(*whitelistThreshold)
 	}
 
 	app.Action = func() {
@@ -40,7 +43,15 @@ func main() {
 			log.Fatalf("Application interrupted [%v]", s)
 		})
 
-		result := scan(scannerConfig{*imageName, whitelist, *clair, *ip, *reportFile})
+		result := scan(scannerConfig{
+			*imageName,
+			whitelist,
+			*clair,
+			*ip,
+			*reportFile,
+			*whitelistThreshold,
+			*reportAll,
+		})
 		if len(result) > 0 {
 			os.Exit(1)
 		}
