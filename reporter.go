@@ -30,12 +30,6 @@ func sortBySeverity(vulnerabilities []vulnerabilityInfo) {
 	})
 }
 
-// func sortByStatus(vulnerabilities []vulnerabilityInfo, unapproved []string) {}
-
-func formatSeverity(severity string) string {
-	return fmt.Sprintf(ErrorColor, severity)
-}
-
 func formatStatus(status string) string {
 	if status == "Approved" {
 		return fmt.Sprintf(NoticeColor, status)
@@ -54,7 +48,7 @@ func formatTableData(vulnerabilities []vulnerabilityInfo, unapproved []string) [
 		}
 		formatted[i] = []string{
 			formatStatus(status),
-			formatSeverity(vulnerability.Severity) + " " + vulnerability.Vulnerability,
+			vulnerability.Severity + " " + vulnerability.Vulnerability,
 			vulnerability.FeatureName,
 			vulnerability.FeatureVersion,
 			vulnerability.Description + "\n\n" + vulnerability.Link,
@@ -94,15 +88,19 @@ func filterApproved(vulnerabilities []vulnerabilityInfo, unapproved []string, re
 func reportToConsole(imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, reportAll bool) {
 	if len(vulnerabilities) > 0 {
 		logger.Warnf("Image [%s] contains %d total vulnerabilities", imageName, len(vulnerabilities))
-		if len(unapproved) > 0 {
-			logger.Errorf("Image [%s] contains %d unapproved vulnerabilities", imageName, len(unapproved))
-		} else {
-			logger.Infof("Image [%s] contains %d unapproved vulnerabilities", imageName, len(unapproved))
-		}
+
 		vulnerabilities = filterApproved(vulnerabilities, unapproved, reportAll)
 		sortBySeverity(vulnerabilities)
-		// sortByStatus(vulnerabilities)
-		printTable(vulnerabilities, unapproved)
+
+		if len(unapproved) > 0 {
+			logger.Errorf("Image [%s] contains %d unapproved vulnerabilities", imageName, len(unapproved))
+			printTable(vulnerabilities, unapproved)
+		} else {
+			logger.Infof("Image [%s] contains %d unapproved vulnerabilities", imageName, len(unapproved))
+			if reportAll {
+				printTable(vulnerabilities, unapproved)
+			}
+		}
 	} else {
 		logger.Infof("Image [%s] contains %d total vulnerabilities", imageName, len(vulnerabilities))
 	}
