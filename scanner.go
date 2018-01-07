@@ -22,16 +22,6 @@ type scannerConfig struct {
 	reportAll          bool
 }
 
-var SeverityMap = map[string]int{
-	"Defcon1":    1,
-	"Critical":   2,
-	"High":       3,
-	"Medium":     4,
-	"Low":        5,
-	"Negligible": 6,
-	"Unknown":    7,
-}
-
 // scan orchestrates the scanning process of an image
 func scan(config scannerConfig) []string {
 	//Create a temporary folder where the docker image layers are going to be stored
@@ -68,8 +58,6 @@ func checkForUnapprovedVulnerabilities(imageName string, vulnerabilities []vulne
 		vulnerability := vulnerabilities[i].Vulnerability
 		severity := vulnerabilities[i].Severity
 		vulnerable := true
-
-		// logger.Infof("%s %s %s %s", severity, SeverityMap[severity], whitelistThreshold, SeverityMap[whitelistThreshold])
 
 		//Check if the vulnerability has a severity less than our threshold severity
 		if SeverityMap[severity] > SeverityMap[whitelistThreshold] {

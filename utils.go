@@ -20,6 +20,17 @@ const (
 	DebugColor   = "\033[0;36m%s\033[0m"
 )
 
+// Exported var used as mapping on CVE severity name to implied ranking
+var SeverityMap = map[string]int{
+	"Defcon1":    1,
+	"Critical":   2,
+	"High":       3,
+	"Medium":     4,
+	"Low":        5,
+	"Negligible": 6,
+	"Unknown":    7,
+}
+
 // listenForSignal listens for interactions and executes the desired code when it happens
 func listenForSignal(fn func(os.Signal)) {
 	signalChannel := make(chan os.Signal, 0)
@@ -89,23 +100,10 @@ func parseWhitelistFile(whitelistFile string) vulnerabilitiesWhitelist {
 
 // Validate that the given CVE severity threshold is a valid severity
 func validateThreshold(threshold string) {
-	valid := false
 	for severity := range SeverityMap {
 		if threshold == severity {
-			valid = true
+			return
 		}
 	}
-	if !valid {
-		logger.Fatalf("Invalid CVE severity threshold %s given", threshold)
-	}
-}
-
-func Filter(vs []string, f func(string) bool) []string {
-	vsf := make([]string, 0)
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
-		}
-	}
-	return vsf
+	logger.Fatalf("Invalid CVE severity threshold %s given", threshold)
 }

@@ -15,15 +15,6 @@ type vulnerabilityReport struct {
 	Vulnerabilities []vulnerabilityInfo `json:"vulnerabilities"`
 }
 
-type ReportTableRow struct {
-	Severity    string
-	Feature     string
-	Details     string
-	Description string
-}
-
-type ReportTableData [][]ReportTableRow
-
 func sortBySeverity(vulnerabilities []vulnerabilityInfo) {
 	sort.Slice(vulnerabilities, func(i, j int) bool {
 		return SeverityMap[vulnerabilities[i].Severity] < SeverityMap[vulnerabilities[j].Severity]
@@ -96,13 +87,13 @@ func reportToConsole(imageName string, vulnerabilities []vulnerabilityInfo, unap
 			logger.Errorf("Image [%s] contains %d unapproved vulnerabilities", imageName, len(unapproved))
 			printTable(vulnerabilities, unapproved)
 		} else {
-			logger.Infof("Image [%s] contains %d unapproved vulnerabilities", imageName, len(unapproved))
+			logger.Infof("Image [%s] contains NO unapproved vulnerabilities", imageName)
 			if reportAll {
 				printTable(vulnerabilities, unapproved)
 			}
 		}
 	} else {
-		logger.Infof("Image [%s] contains %d total vulnerabilities", imageName, len(vulnerabilities))
+		logger.Infof("Image [%s] contains NO unapproved vulnerabilities", imageName)
 	}
 }
 
