@@ -20,7 +20,15 @@ func TestMain(m *testing.M) {
 
 func TestDebian(t *testing.T) {
 	initializeLogger("")
-	unapproved := scan(scannerConfig{"debian:wheezy", vulnerabilitiesWhitelist{}, "http://127.0.0.1:6060", *ip, ""})
+	unapproved := scan(scannerConfig{
+		"debian:wheezy",
+		vulnerabilitiesWhitelist{},
+		"http://127.0.0.1:6060",
+		*ip,
+		"",
+		"Unknown",
+		true,
+	})
 	if len(unapproved) == 0 {
 		t.Errorf("No vulnerabilities, expecting some")
 	}

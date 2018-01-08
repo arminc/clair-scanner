@@ -12,6 +12,25 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+const (
+	InfoColor    = "\033[1;34m%s\033[0m"
+	NoticeColor  = "\033[1;36m%s\033[0m"
+	WarningColor = "\033[1;33m%s\033[0m"
+	ErrorColor   = "\033[1;31m%s\033[0m"
+	DebugColor   = "\033[0;36m%s\033[0m"
+)
+
+// Exported var used as mapping on CVE severity name to implied ranking
+var SeverityMap = map[string]int{
+	"Defcon1":    1,
+	"Critical":   2,
+	"High":       3,
+	"Medium":     4,
+	"Low":        5,
+	"Negligible": 6,
+	"Unknown":    7,
+}
+
 // listenForSignal listens for interactions and executes the desired code when it happens
 func listenForSignal(fn func(os.Signal)) {
 	signalChannel := make(chan os.Signal, 0)
@@ -77,4 +96,14 @@ func parseWhitelistFile(whitelistFile string) vulnerabilitiesWhitelist {
 		logger.Fatalf("Could not parse whitelist file, could not unmarshal %v", err)
 	}
 	return whitelistTmp
+}
+
+// Validate that the given CVE severity threshold is a valid severity
+func validateThreshold(threshold string) {
+	for severity := range SeverityMap {
+		if threshold == severity {
+			return
+		}
+	}
+	logger.Fatalf("Invalid CVE severity threshold %s given", threshold)
 }

@@ -104,9 +104,11 @@ Arguments:
 
 Options:
   -w, --whitelist=""                    Path to the whitelist file
+  -t, --threshold="Unknown"             CVE severity threshold. Valid values; 'Defcon1', 'Critical', 'High', 'Medium', 'Low', 'Negligible', 'Unknown'
   -c, --clair="http://127.0.0.1:6060"   Clair URL
   --ip="localhost"                      IP address where clair-scanner is running on
   -l, --log=""                          Log to a file
+  --all, --reportAll=true               Display all vulnerabilities, even if they are approved
   -r, --report=""                       Report output file, as JSON
 ```
 

@@ -11,17 +11,17 @@ ensure:
 build:
 	CGO_ENABLED=0 go build
 
-docker: 
+docker:
 	@cd docker && \
 		docker build -t golang-cross-compile .
 
 cross: docker
 	docker run -ti --rm -e CGO_ENABLED=0 -v $(CURDIR):/gopath/src/clair-scanner -w /gopath/src/clair-scanner golang-cross-compile gox -osarch="darwin/amd64 darwin/386 linux/amd64 linux/386 windows/amd64 windows/386" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
-clean: 
+clean:
 	rm -rf dist
 
-rmdocker: 
+rmdocker:
 	-docker kill clair
 	-docker kill db
 	-docker rm clair
@@ -30,7 +30,6 @@ rmdocker:
 test:
 	go test
 
-
 pull:
 	docker pull alpine:3.5
 
@@ -38,7 +37,7 @@ dbosx:
 	docker run -p 5432:5432 -d --name db arminc/clair-db:$(shell date -v-1d +%Y-%m-%d)
 	@sleep 5
 
-db: 
+db:
 	docker run -p 5432:5432 -d --name db arminc/clair-db:$(shell date -d "-1 day" +%Y-%m-%d)
 	@sleep 5
 
