@@ -2,11 +2,13 @@ package main
 
 import (
 	"archive/tar"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	yaml "gopkg.in/yaml.v2"
@@ -64,6 +66,9 @@ func untar(imageReader io.ReadCloser, target string) error {
 		}
 
 		path := filepath.Join(target, header.Name)
+		if !strings.HasPrefix(path, filepath.Clean(target) + string(os.PathSeparator)) {
+			return fmt.Errorf("%s: illegal file path", header.Name)
+		}
 		info := header.FileInfo()
 		if info.IsDir() {
 			if err = os.MkdirAll(path, info.Mode()); err != nil {
