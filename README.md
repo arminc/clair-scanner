@@ -57,7 +57,7 @@ Example of a container scan, start Clair:
 
 ```bash
 docker run -p 5432:5432 -d --name db arminc/clair-db:2017-09-18
-docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:v2.0.1
+docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:v2.0.6
 ```
 
 Now scan a container, that has a whitelisted CVE (this is on OSX with Docker for Mac):
