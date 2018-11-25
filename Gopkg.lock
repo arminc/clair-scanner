@@ -16,8 +16,8 @@
 [[projects]]
   name = "github.com/coreos/clair"
   packages = [".","api/v1","database","ext/featurefmt","ext/featurens","ext/imagefmt","ext/notification","ext/versionfmt","ext/vulnmdsrc","ext/vulnsrc","pkg/commonerr","pkg/stopper","pkg/tarutil"]
-  revision = "b2519a044a7e5ed78e3edafe22a955fb1a189a4e"
-  version = "v2.0.1"
+  revision = "9a452050c85acaa573403edffff1c13921cd460a"
+  version = "v2.0.7"
 
 [[projects]]
   name = "github.com/coreos/pkg"
@@ -184,6 +184,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "197187947850b0ee9e0264ef2d4a6c150c29dc51f85040947ffbf50e3daf3c3b"
+  inputs-digest = "e126ff845f606b5bc420db825e57fdf66304c563ba3fd47d2299845851df5611"
   solver-name = "gps-cdcl"
   solver-version = 1
