@@ -1,6 +1,6 @@
 # Clair scanner
 
-![Maintenance](https://img.shields.io/maintenance/yes/2018.svg)
+![Maintenance](https://img.shields.io/maintenance/yes/2019.svg)
 [![Build Status](https://travis-ci.org/arminc/clair-scanner.svg?branch=master)](https://travis-ci.org/arminc/clair-scanner)
 [![Go Report Card](https://goreportcard.com/badge/github.com/arminc/clair-scanner)](https://goreportcard.com/report/github.com/arminc/clair-scanner)
 [![Coverage Status](https://coveralls.io/repos/github/arminc/clair-scanner/badge.svg?branch=master)](https://coveralls.io/github/arminc/clair-scanner?branch=master)
