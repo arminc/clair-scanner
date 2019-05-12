@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 func TestDebian(t *testing.T) {
 	initializeLogger("")
 	unapproved := scan(scannerConfig{
-		"debian:wheezy",
+		"debian:jessie",
 		vulnerabilitiesWhitelist{},
 		"http://127.0.0.1:6060",
 		*ip,

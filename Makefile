@@ -33,19 +33,15 @@ test:
 pull:
 	docker pull alpine:3.5
 
-dbosx:
-	docker run -p 5432:5432 -d --name db arminc/clair-db:$(shell date -v-1d +%Y-%m-%d)
-	@sleep 5
-
 db:
-	docker run -p 5432:5432 -d --name db arminc/clair-db:$(shell date -d "-1 day" +%Y-%m-%d)
+	docker run -p 5432:5432 -d --name db arminc/clair-db:latest
 	@sleep 5
 
 clair:
-	docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:v2.0.6
+	docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:latest
 	@sleep 5
 
-integration: pull dbosx clair
+integration: pull db clair
 	go test -v -covermode=count -coverprofile=coverage.out -ip $(shell ipconfig getifaddr en0) -tags integration
 
 integrationlinux: pull db clair
