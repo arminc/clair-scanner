@@ -38,7 +38,7 @@ db:
 	@sleep 5
 
 clair:
-	docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:v2.0.6
+	docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:latest
 	@sleep 5
 
 integration: pull db clair
