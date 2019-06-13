@@ -76,12 +76,15 @@ func analyzeLayer(clairURL, path, layerName, parentLayerName string) {
 }
 
 // getVulnerabilities fetches vulnerabilities from Clair and extracts the required information
-func getVulnerabilities(clairURL string, layerIds []string) []vulnerabilityInfo {
+func getVulnerabilities(config scannerConfig, layerIds []string) []vulnerabilityInfo {
 	var vulnerabilities = make([]vulnerabilityInfo, 0)
 	//Last layer gives you all the vulnerabilities of all layers
-	rawVulnerabilities := fetchLayerVulnerabilities(clairURL, layerIds[len(layerIds)-1])
+	rawVulnerabilities := fetchLayerVulnerabilities(config.clairURL, layerIds[len(layerIds)-1])
 	if len(rawVulnerabilities.Features) == 0 {
-		logger.Fatal("Could not fetch vulnerabilities. No features have been detected in the image. This usually means that the image isn't supported by Clair")
+		if config.exitWhenNoFeatures {
+			logger.Fatal("Could not fetch vulnerabilities. No features have been detected in the image. This usually means that the image isn't supported by Clair")
+		}
+		return nil
 	}
 
 	for _, feature := range rawVulnerabilities.Features {

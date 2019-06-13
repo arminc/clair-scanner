@@ -26,6 +26,7 @@ func main() {
 		reportAll          = app.BoolOpt("all reportAll", true, "Display all vulnerabilities, even if they are approved")
 		reportFile         = app.StringOpt("r report", "", "Report output file, as JSON")
 		imageName          = app.StringArg("IMAGE", "", "Name of the Docker image to scan")
+		exitWhenNoFeatures = app.BoolOpt("exit-when-no-features", false, "Exit with status code 1 when no features are found for a particular image")
 	)
 
 	app.Before = func() {
@@ -51,6 +52,7 @@ func main() {
 			*reportFile,
 			*whitelistThreshold,
 			*reportAll,
+			*exitWhenNoFeatures,
 		})
 		if len(result) > 0 {
 			os.Exit(1)

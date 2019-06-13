@@ -20,6 +20,7 @@ type scannerConfig struct {
 	reportFile         string
 	whitelistThreshold string
 	reportAll          bool
+	exitWhenNoFeatures bool
 }
 
 // scan orchestrates the scanning process of an image
@@ -37,7 +38,11 @@ func scan(config scannerConfig) []string {
 
 	//Analyze the layers
 	analyzeLayers(layerIds, config.clairURL, config.scannerIP)
-	vulnerabilities := getVulnerabilities(config.clairURL, layerIds)
+	vulnerabilities := getVulnerabilities(config, layerIds)
+
+	if len(vulnerabilities) == 0 {
+		return []string{}
+	}
 
 	//Check vulnerabilities against whitelist and report
 	unapproved := checkForUnapprovedVulnerabilities(config.imageName, vulnerabilities, config.whitelist, config.whitelistThreshold)
