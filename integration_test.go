@@ -28,6 +28,7 @@ func TestDebian(t *testing.T) {
 		"",
 		"Unknown",
 		true,
+		false,
 	})
 	if len(unapproved) == 0 {
 		t.Errorf("No vulnerabilities, expecting some")
