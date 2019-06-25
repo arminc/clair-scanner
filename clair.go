@@ -83,6 +83,8 @@ func getVulnerabilities(config scannerConfig, layerIds []string) []vulnerability
 	if len(rawVulnerabilities.Features) == 0 {
 		if config.exitWhenNoFeatures {
 			logger.Fatal("Could not fetch vulnerabilities. No features have been detected in the image. This usually means that the image isn't supported by Clair")
+		} else {
+			logger.Warnf("Could not fetch vulnerabilities. No features have been detected in the image. This usually means that the image isn't supported by Clair")
 		}
 		return nil
 	}
