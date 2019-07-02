@@ -40,8 +40,8 @@ func scan(config scannerConfig) []string {
 	analyzeLayers(layerIds, config.clairURL, config.scannerIP)
 	vulnerabilities := getVulnerabilities(config, layerIds)
 
-	if len(vulnerabilities) == 0 {
-		return []string{}
+	if vulnerabilities == nil {
+		return nil; // exit when no features
 	}
 
 	//Check vulnerabilities against whitelist and report
