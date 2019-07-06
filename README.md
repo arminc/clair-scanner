@@ -110,6 +110,7 @@ Options:
   -l, --log=""                          Log to a file
   --all, --reportAll=true               Display all vulnerabilities, even if they are approved
   -r, --report=""                       Report output file, as JSON
+  --exit-when-no-features=false         Exit with status code 5 when no features are found for a particular image
 ```
 
 ## Example whitelist yaml file
