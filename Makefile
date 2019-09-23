@@ -11,7 +11,7 @@ ensure:
 build:
 	CGO_ENABLED=0 go build
 
-install:
+installLocal:
 	CGO_ENABLED=0 go install
 
 docker:
