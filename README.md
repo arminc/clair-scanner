@@ -50,7 +50,7 @@ clair-scanner is available on Linux, MacOS, and Windows platforms.
 
   ```sh
   # Clone the repo
-  go get github.com/arminc/clair-scanner
+  go get -d -u github.com/arminc/clair-scanner
   cd $GOPATH/src/github.com/arminc/clair-scanner
   # Build and install
   make ensure && make installLocal
