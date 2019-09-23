@@ -11,6 +11,9 @@ ensure:
 build:
 	CGO_ENABLED=0 go build
 
+install:
+	CGO_ENABLED=0 go install
+
 docker:
 	@cd docker && \
 		docker build -t golang-cross-compile .
