@@ -122,7 +122,7 @@ generalwhitelist: #Approve CVE for any image
   CVE-2017-6055: XML
   CVE-2017-5586: OpenText
 images:
-  ubuntu: #Apprive CVE only for ubuntu image, regardles of the version
+  ubuntu: #Approve CVE only for ubuntu image, regardles of the version. If it is a private registry with a custom port registry:777/ubuntu:tag this won't work due to a bug.
     CVE-2017-5230: Java
     CVE-2017-5230: XSX
   alpine:
