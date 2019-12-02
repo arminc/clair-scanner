@@ -37,6 +37,27 @@ For the clair-scanner to work, you need a clair server. It is not always conveni
 
 The clair-scanner is a copy of the Clair 'analyze-local-images' <https://github.com/coreos/analyze-local-images> with changes/improvements and addition that checks the vulnerabilities against a whitelist.
 
+## Install
+
+clair-scanner is available on Linux, MacOS, and Windows platforms.
+
+* Binaries for Linux, Windows, and Mac are available in the [releases](https://github.com/arminc/clair-scanner/releases) page.
+* You can also install from source. To do so you must:
+  1. Have go 1.9+ installed
+  1. Have [dep](https://github.com/golang/dep) installed
+  1. Clone the repo
+  1. Build and install the executable
+
+  ```sh
+  # Clone the repo
+  go get -d -u github.com/arminc/clair-scanner
+  cd $GOPATH/src/github.com/arminc/clair-scanner
+  # Build and install
+  make ensure && make installLocal
+  # Run
+  clair-scanner -h
+  ```
+
 ## Build
 
 clair-scanner is built with Go 1.9 and uses [dep](https://github.com/golang/dep) as dependencies manager. Use the Makefile to build and install dependencies.
