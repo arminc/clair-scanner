@@ -153,7 +153,7 @@ images:
 
 If you get `[CRIT] ▶ Could not save Docker image [image:version]: Error response from daemon: reference does not exist`, this means that image `image:version` is not locally present. You should have this image present locally before trying to analyze it (e.g.: `docker pull image:version`).
 
-Errors like `[CRIT] ▶ Could not analyze layer: Clair responded with a failure: Got response 400 with message {"Error":{"Message":"could not find layer"}}` indicates that Clair can not retrieve a layer from `clair-scanner`. This means that you probably specified a wrong IP address in options (`--ip`). Note that you should use a publicly accessible IP when clair is running in a container, or it wont be able to connect to `clair-scanner`.
+Errors like `[CRIT] ▶ Could not analyze layer: Clair responded with a failure: Got response 400 with message {"Error":{"Message":"could not find layer"}}` indicates that Clair can not retrieve a layer from `clair-scanner`. This means that you probably specified a wrong IP address in options (`--ip`). Note that you should use a publicly accessible IP when clair is running in a container, or it wont be able to connect to `clair-scanner`. If clair is running inside the docker, use the docker0 ip address. You can find the docker0 ip address by running `ifconfig docker0 | grep inet`
 
 `[CRIT] ▶ Could not read Docker image layers: manifest.json is not valid` fires when image version is not specified and is required. Try to add `:version` (.e.g. `:latest`) after the image name.
 
