@@ -76,7 +76,11 @@ func filterApproved(vulnerabilities []vulnerabilityInfo, unapproved []string, re
 	return vulns
 }
 
-func reportToConsole(imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, reportAll bool) {
+func reportToConsole(imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, reportAll bool, quiet bool) {
+	if quiet {
+		return
+	}
+
 	if len(vulnerabilities) > 0 {
 		logger.Warnf("Image [%s] contains %d total vulnerabilities", imageName, len(vulnerabilities))
 
