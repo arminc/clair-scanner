@@ -20,6 +20,7 @@ type scannerConfig struct {
 	reportFile         string
 	whitelistThreshold string
 	reportAll          bool
+	quiet              bool
 	exitWhenNoFeatures bool
 }
 
@@ -48,7 +49,7 @@ func scan(config scannerConfig) []string {
 	unapproved := checkForUnapprovedVulnerabilities(config.imageName, vulnerabilities, config.whitelist, config.whitelistThreshold)
 
 	// Report vulnerabilities
-	reportToConsole(config.imageName, vulnerabilities, unapproved, config.reportAll)
+	reportToConsole(config.imageName, vulnerabilities, unapproved, config.reportAll, config.quiet)
 	reportToFile(config.imageName, vulnerabilities, unapproved, config.reportFile)
 
 	return unapproved

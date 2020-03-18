@@ -25,6 +25,7 @@ func main() {
 		logFile            = app.StringOpt("l log", "", "Log to a file")
 		reportAll          = app.BoolOpt("all reportAll", true, "Display all vulnerabilities, even if they are approved")
 		reportFile         = app.StringOpt("r report", "", "Report output file, as JSON")
+		quiet              = app.BoolOpt("q quiet", false, "Quiets ASCII table output")
 		imageName          = app.StringArg("IMAGE", "", "Name of the Docker image to scan")
 		exitWhenNoFeatures = app.BoolOpt("exit-when-no-features", false, "Exit with status code 5 when no features are found for a particular image")
 	)
@@ -52,6 +53,7 @@ func main() {
 			*reportFile,
 			*whitelistThreshold,
 			*reportAll,
+			*quiet,
 			*exitWhenNoFeatures,
 		})
 		if result == nil {
