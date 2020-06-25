@@ -1,25 +1,24 @@
 language: go
 
 go:
-  - 1.9
+  - 1.14
 
 services:
   - docker
 
 install:
   - make install
-  - make ensure
   - make docker
   # Let's stop postgresql
   - sudo service postgresql stop
   # wait for postgresql to shutdown
   - while sudo lsof -Pi :5432 -sTCP:LISTEN -t; do sleep 1; done
-  
+
 script:
   - make release
   - goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
-deploy:  
+deploy:
   provider: releases
   skip_cleanup: true
   api_key: $API_KEY
