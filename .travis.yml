@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - 1.14
+  - "1.14"
 
 services:
   - docker
@@ -9,6 +9,7 @@ services:
 install:
   - make install
   - make docker
+  - ifconfig
   # Let's stop postgresql
   - sudo service postgresql stop
   # wait for postgresql to shutdown
