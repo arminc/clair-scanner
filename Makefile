@@ -1,12 +1,8 @@
 .PHONY : install ensure build docker rmdocker test integration integrationlinux
 
-install:
-	go get -u github.com/golang/dep/cmd/dep
+install:	
 	go get -u golang.org/x/tools/cmd/cover
 	go get -u github.com/mattn/goveralls
-
-ensure:
-	dep ensure
 
 build:
 	CGO_ENABLED=0 go build
@@ -35,6 +31,7 @@ test:
 
 pull:
 	docker pull alpine:3.5
+	docker pull debian:jessie
 
 db:
 	docker run -p 5432:5432 -d --name db arminc/clair-db:latest

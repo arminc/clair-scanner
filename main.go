@@ -20,7 +20,7 @@ func main() {
 	var (
 		whitelistFile      = app.StringOpt("w whitelist", "", "Path to the whitelist file")
 		whitelistThreshold = app.StringOpt("t threshold", "Unknown", "CVE severity threshold. Valid values; 'Defcon1', 'Critical', 'High', 'Medium', 'Low', 'Negligible', 'Unknown'")
-		clair              = app.StringOpt("c clair", "http://127.0.0.1:6060", "Clair URL")
+		clair              = app.String(cli.StringOpt{Name: "c clair", Value: "http://127.0.0.1:6060", Desc: "Clair URL", EnvVar: "CLAIR_URL"})
 		ip                 = app.StringOpt("ip", "localhost", "IP address where clair-scanner is running on")
 		logFile            = app.StringOpt("l log", "", "Log to a file")
 		reportAll          = app.BoolOpt("all reportAll", true, "Display all vulnerabilities, even if they are approved")
