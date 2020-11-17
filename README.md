@@ -51,6 +51,8 @@ clair-scanner is available on Linux, MacOS, and Windows platforms.
   # Clone the repo
   git clone git@github.com:arminc/clair-scanner.git
   # Build and install 
+  cd clair-scanner
+  make build
   make installLocal
   # Run
   ./clair-scanner -h
@@ -75,8 +77,8 @@ make cross
 Example of a container scan, start Clair:
 
 ```bash
-docker run -p 5432:5432 -d --name db arminc/clair-db:2017-09-18
-docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:v2.0.6
+docker run -p 5432:5432 -d --name db arminc/clair-db:latest
+docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:latest
 ```
 
 Now scan a container, that has a whitelisted CVE (this is on OSX with Docker for Mac):
