@@ -111,6 +111,15 @@ Output:
 2017/09/24 11:16:41 [CRIT] ▶ Image contains unapproved vulnerabilities: [CVE-2016-9840 CVE-2016-9841 CVE-2016-9842 CVE-2016-9843]
 ```
 
+Example of a single bash script to run clair-scanner:
+
+Copy [example-run.sh](./example-run.sh) to `/usr/local/bin/clair-scanner`
+
+```bash
+chmod +x /usr/local/bin/clair-scanner
+clair-scanner `image:version`
+```
+
 ## Help information
 
 ```bash
