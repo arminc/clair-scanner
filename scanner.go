@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"strings"
 )
@@ -35,14 +36,14 @@ func scan(config scannerConfig) []string {
 
 	//Start a server that can serve Docker image layers to Clair
 	server := httpFileServer(tmpPath)
-	defer server.Shutdown(nil)
+	defer server.Shutdown(context.TODO())
 
 	//Analyze the layers
 	analyzeLayers(layerIds, config.clairURL, config.scannerIP)
 	vulnerabilities := getVulnerabilities(config, layerIds)
 
 	if vulnerabilities == nil {
-		return nil; // exit when no features
+		return nil // exit when no features
 	}
 
 	//Check vulnerabilities against whitelist and report
