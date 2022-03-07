@@ -1,6 +1,0 @@
-images:
-  alpine:
-    CVE-2016-9840: zlib
-    CVE-2016-9841: zlib
-    CVE-2016-9842: zlib
-    CVE-2016-9843: zlib
