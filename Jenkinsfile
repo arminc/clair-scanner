@@ -19,33 +19,37 @@ pipeline {
     }
 
     stages {
-        when {
-            expression {
-              // Only when the latest commit messages is like vX.Y.Z
-              // and the branch is declared in RELEASE_BRANCH_NAMES
-              LAST_COMMIT_MESSAGE = sh(
-                script: 'git log --format=%B -n 1',
-                returnStdout: true
-              ).trim()
-              return RELEASE_BRANCH_NAMES.contains(BRANCH_NAME) && LAST_COMMIT_MESSAGE ==~ /v\d+\.\d+\.\d+$/
+        stage('Prod stages') {
+            when {
+                expression {
+                  // Only when the latest commit messages is like vX.Y.Z
+                  // and the branch is declared in RELEASE_BRANCH_NAMES
+                  LAST_COMMIT_MESSAGE = sh(
+                    script: 'git log --format=%B -n 1',
+                    returnStdout: true
+                  ).trim()
+                  return RELEASE_BRANCH_NAMES.contains(BRANCH_NAME) && LAST_COMMIT_MESSAGE ==~ /v\d+\.\d+\.\d+$/
+                }
             }
-        }
 
-        stage('Build toucantoco/clair-scanner prod') {
-            steps {
-                storeStage()
-                sh 'make docker-build-prod'
-            }
-        }
+            stages {
+                stage('Build toucantoco/clair-scanner prod') {
+                    steps {
+                        storeStage()
+                        sh 'make docker-build-prod'
+                    }
+                }
 
-        stage('Push toucantoco/clair-scanner prod') {
-            steps {
-                storeStage()
-                // Create tag latest on the current clair-scanner version
-                // And push on docker hub:
-                //    - toucantoco/clair-scanner:$clair-scanner_VERSION
-                //    - toucantoco/clair-scanner:latest
-                sh "make push-to-registry CLAIR_IMAGE_MORE_TAGS=latest"
+                stage('Push toucantoco/clair-scanner prod') {
+                    steps {
+                        storeStage()
+                        // Create tag latest on the current clair-scanner version
+                        // And push on docker hub:
+                        //    - toucantoco/clair-scanner:$clair-scanner_VERSION
+                        //    - toucantoco/clair-scanner:latest
+                        sh "make push-to-registry CLAIR_IMAGE_MORE_TAGS=latest"
+                    }
+                }
             }
         }
     }
