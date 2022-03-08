@@ -1,0 +1,34 @@
+FROM alpine:3.15.0
+
+RUN apk update && apk add --no-cache \
+    curl \
+    zip \
+    alpine-sdk \
+    ca-certificates \
+    git\
+    mercurial \
+    breezy \
+    go 
+
+ENV GOVERSION 1.17.4
+RUN mkdir /goroot && mkdir /gopath
+RUN curl https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz \
+    | tar xvzf - -C /goroot --strip-components=1
+
+ENV GOPATH /gopath
+ENV GOROOT /goroot
+ENV PATH $GOROOT/bin:$GOPATH/bin:$PATH
+
+RUN go get github.com/mitchellh/gox
+
+WORKDIR /clair-scanner
+
+COPY . .
+
+RUN mv /clair-scanner/docker_configs/entrypoint.sh /bin/entrypoint.sh
+
+RUN make -f Makefile build && \
+    mv ./clair-scanner /bin/
+
+WORKDIR /
+RUN rm -rf clair-scanner
