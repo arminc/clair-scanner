@@ -36,7 +36,7 @@ pipeline {
                 stage('Build toucantoco/clair-scanner prod') {
                     steps {
                         storeStage()
-                        sh 'make docker-build-prod'
+                        sh 'make -f Toucan_Makefile docker-build-prod'
                     }
                 }
 
@@ -47,7 +47,7 @@ pipeline {
                         // And push on docker hub:
                         //    - toucantoco/clair-scanner:$clair-scanner_VERSION
                         //    - toucantoco/clair-scanner:latest
-                        sh "make push-to-registry CLAIR_IMAGE_MORE_TAGS=latest"
+                        sh "make -f Toucan_Makefile push-to-registry CLAIR_IMAGE_MORE_TAGS=latest"
                     }
                 }
             }
