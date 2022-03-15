@@ -1,5 +1,29 @@
 # Clair scanner
 
+## Toucan Information
+
+Goal of this forked repo is to have a recent docker image (<1 years) of clair-scanner binary.
+Image is stored on Quay repo : https://quay.io/repository/toucantoco/clair-scanner
+
+A jenkins pipeline is automatically called when a PR is merged with the version in comment.
+As an example :
+
+```
+git commit -am "v0.4.2"
+```
+
+Will produce a new image version with tag v0.4.2
+
+To set a new version use :
+
+```
+make -f Toucan_Makefile set-version NEW_VERSION=X.X.X
+```
+
+You can find your Jenkins job here : https://jenkins.toucantoco.guru/job/clair-scanner/
+
+# Original Readme
+
 ![Maintenance](https://img.shields.io/maintenance/yes/2020.svg)
 [![Build Status](https://travis-ci.org/arminc/clair-scanner.svg?branch=master)](https://travis-ci.org/arminc/clair-scanner)
 [![Go Report Card](https://goreportcard.com/badge/github.com/arminc/clair-scanner)](https://goreportcard.com/report/github.com/arminc/clair-scanner)
