@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"log"
 	"net/http"
+	"time"
 
-	"github.com/coreos/clair/api/v1"
+	"github.com/quay/claircore"
 )
 
 const (
-	postLayerURI        = "/v1/layers"
-	getLayerFeaturesURI = "/v1/layers/%s?vulnerabilities"
+	indexerURI = "/indexer/api/v1/index_report"
+	reportURI  = "/indexer/api/v1/index_report/%s"
+	matcherURI = "/matcher/api/v1/vulnerability_report/%s"
 )
 
 type vulnerabilityInfo struct {
@@ -26,97 +29,129 @@ type vulnerabilityInfo struct {
 	FixedBy        string `json:"fixedby"`
 }
 
-// analyzeLayer tells Clair which layers to analyze
-func analyzeLayers(layerIds []string, clairURL string, scannerIP string) {
-	tmpPath := "http://" + scannerIP + ":" + httpPort
+type VulnerabilityReport struct {
+	Vulnerabilities []claircore.Vulnerability `json:"vulnerabilities"` // Ensure this matches the exact JSON key case!
+}
 
-	for i := 0; i < len(layerIds); i++ {
-		logger.Infof("Analyzing %s", layerIds[i])
+func analyzeContainer(client *http.Client, headers map[string]string, clairURL string, payloadJSON Payload) (string, error) {
 
-		if i > 0 {
-			analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], layerIds[i-1])
+	payloadBytes, err := json.Marshal(payloadJSON)
+	if err != nil {
+		log.Fatalf("Error marshaling payload: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", clairURL+indexerURI, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return "", fmt.Errorf("error creating request: %v", err)
+	}
+
+	// Set headers
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	// Create an HTTP client and send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("error sending request to server: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Read and log the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading response body: %v", err)
+	}
+
+	// Parse JSON response to extract the report_id
+	var responseMap map[string]interface{}
+	if err := json.Unmarshal(body, &responseMap); err != nil {
+		return "", fmt.Errorf("error parsing JSON response: %v", err)
+	}
+
+	// Extract the report_id assuming it's called "manifest_hash"
+	reportID, ok := responseMap["manifest_hash"].(string)
+	if !ok {
+		return "", fmt.Errorf("manifest_hash not found in the response")
+	}
+
+	return string(reportID), nil
+}
+
+func waitForSuccessfulResponse(client *http.Client, headers map[string]string, clairURL, reportID string) *http.Response {
+	maxAttempts := 30
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		time.Sleep(1 * time.Second) // Wait for 1 second before each new attempt
+
+		response, err := getRequest(client, clairURL+fmt.Sprintf(reportURI, reportID), headers)
+		if err != nil {
+			log.Println("Error during HTTP request:", err)
+			continue
+		}
+
+		if response.StatusCode == 200 {
+			return response
+		} else if response.StatusCode == 404 {
+			log.Println("Index report not yet complete, retrying...")
 		} else {
-			analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], "")
+			log.Printf("Failed to retrieve index report. Status code: %d\n", response.StatusCode)
+			break
 		}
 	}
+	log.Println("Index report did not complete in the expected time.")
+	return nil
 }
 
-// analyzeLayer pushes the required information to Clair to scan the layer
-func analyzeLayer(clairURL, path, layerName, parentLayerName string) {
-	payload := v1.LayerEnvelope{
-		Layer: &v1.Layer{
-			Name:       layerName,
-			Path:       path,
-			ParentName: parentLayerName,
-			Format:     "Docker",
-		},
-	}
-	jsonPayload, err := json.Marshal(payload)
+func getRequest(client *http.Client, url string, headers map[string]string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		logger.Fatalf("Could not analyze layer: payload is not JSON %v", err)
+		return nil, err
 	}
 
-	request, err := http.NewRequest("POST", clairURL+postLayerURI, bytes.NewBuffer(jsonPayload))
-	if err != nil {
-		logger.Fatalf("Could not analyze layer: could not prepare request for Clair %v", err)
+	for key, value := range headers {
+		req.Header.Set(key, value)
 	}
 
-	request.Header.Set("Content-Type", "application/json")
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		logger.Fatalf("Could not analyze layer: POST to Clair failed %v", err)
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != 201 {
-		body, _ := ioutil.ReadAll(response.Body)
-		logger.Fatalf("Could not analyze layer: Clair responded with a failure: Got response %d with message %s", response.StatusCode, string(body))
-	}
+	return client.Do(req)
 }
 
-// getVulnerabilities fetches vulnerabilities from Clair and extracts the required information
-func getVulnerabilities(config scannerConfig, layerIds []string) []vulnerabilityInfo {
+func fetchVulnerabilities(client *http.Client, headers map[string]string, clairURL, reportID string) []vulnerabilityInfo {
+
 	var vulnerabilities = make([]vulnerabilityInfo, 0)
-	//Last layer gives you all the vulnerabilities of all layers
-	rawVulnerabilities := fetchLayerVulnerabilities(config.clairURL, layerIds[len(layerIds)-1])
-	if len(rawVulnerabilities.Features) == 0 {
-		if config.exitWhenNoFeatures {
-			logger.Fatal("Could not fetch vulnerabilities. No features have been detected in the image. This usually means that the image isn't supported by Clair")
-		}
+
+	vulnerabilityResponse, err := getRequest(client, clairURL+fmt.Sprintf(matcherURI, reportID), headers)
+
+	if err != nil {
+		log.Println("Error during HTTP request:", err)
 		return nil
 	}
 
-	for _, feature := range rawVulnerabilities.Features {
-		if len(feature.Vulnerabilities) > 0 {
-			for _, vulnerability := range feature.Vulnerabilities {
-				vulnerability := vulnerabilityInfo{feature.Name, feature.Version, vulnerability.Name, vulnerability.NamespaceName, vulnerability.Description, vulnerability.Link, vulnerability.Severity, vulnerability.FixedBy}
-				vulnerabilities = append(vulnerabilities, vulnerability)
-			}
-		}
-	}
-	return vulnerabilities
-}
-
-// fetchLayerVulnerabilities fetches vulnerabilities from Clair
-func fetchLayerVulnerabilities(clairURL string, layerID string) v1.Layer {
-	response, err := http.Get(clairURL + fmt.Sprintf(getLayerFeaturesURI, layerID))
+	bodyBytes, err := io.ReadAll(vulnerabilityResponse.Body)
 	if err != nil {
-		logger.Fatalf("Fetch vulnerabilities, Clair responded with a failure %v", err)
+		log.Println("Error reading response body:", err)
+		return nil
 	}
-	defer response.Body.Close()
+	// Reset the response body so it can be read again by json decoder
+	vulnerabilityResponse.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 
-	if response.StatusCode != 200 {
-		body, _ := ioutil.ReadAll(response.Body)
-		logger.Fatalf("Fetch vulnerabilities, Clair responded with a failure: Got response %d with message %s", response.StatusCode, string(body))
+	// fmt.Println("Response Body:", string(bodyBytes))
+
+	// Now decode using the original body content
+	var report claircore.VulnerabilityReport
+	if err := json.Unmarshal(bodyBytes, &report); err != nil {
+		log.Println("Error decoding vulnerability report:", err)
+		return nil
 	}
 
-	var apiResponse v1.LayerEnvelope
-	if err = json.NewDecoder(response.Body).Decode(&apiResponse); err != nil {
-		logger.Fatalf("Fetch vulnerabilities, Could not decode response %v", err)
-	} else if apiResponse.Error != nil {
-		logger.Fatalf("Fetch vulnerabilities, Response contains errors %s", apiResponse.Error.Message)
+	if len(report.Vulnerabilities) > 0 {
+		for _, vuln := range report.Vulnerabilities {
+			vuln := vulnerabilityInfo{vuln.Name, vuln.Package.Version, vuln.Name, vuln.Dist.DID + ":" + vuln.Dist.VersionID, vuln.Description, vuln.Links, vuln.Severity, vuln.FixedInVersion}
+			vulnerabilities = append(vulnerabilities, vuln)
+		}
+	} else {
+		log.Println("No vulnerabilities found.")
 	}
 
-	return *apiResponse.Layer
+	return vulnerabilities
+
 }

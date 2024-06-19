@@ -3,10 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
-	"io/ioutil"
 	"os"
 	"sort"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 type vulnerabilityReport struct {
@@ -115,7 +115,7 @@ func reportToFile(imageName string, vulnerabilities []vulnerabilityInfo, unappro
 	if err != nil {
 		logger.Fatalf("Could not create a report: report is not proper JSON %v", err)
 	}
-	if err = ioutil.WriteFile(file, reportJSON, 0644); err != nil {
+	if err = os.WriteFile(file, reportJSON, 0644); err != nil {
 		logger.Fatalf("Could not create a report: could not write to file %v", err)
 	}
 }

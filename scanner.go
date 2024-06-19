@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"log"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -32,15 +34,37 @@ func scan(config scannerConfig) []string {
 	defer os.RemoveAll(tmpPath)
 
 	saveDockerImage(config.imageName, tmpPath)
-	layerIds := getImageLayerIds(tmpPath)
+	payloadJSON, err := LoadDockerManifest(tmpPath, config.scannerIP)
+
+	if err != nil {
+		log.Fatalf("Failed to load docker manifest: %s", err)
+	}
+
+	//fmt.Printf("Payload: %+v\n", payloadJSON)
 
 	//Start a server that can serve Docker image layers to Clair
 	server := httpFileServer(tmpPath)
 	defer server.Shutdown(context.TODO())
 
-	//Analyze the layers
-	analyzeLayers(layerIds, config.clairURL, config.scannerIP)
-	vulnerabilities := getVulnerabilities(config, layerIds)
+	client := &http.Client{}
+	// Define headers
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		// "Authorization": "Bearer <your-api-token>", // Uncomment and set if authentication is required
+	}
+
+	reportID, err := analyzeContainer(client, headers, config.clairURL, *payloadJSON)
+	if err != nil {
+		log.Fatalf("Failed to submit container for analysis: %s", err)
+	}
+
+	successfulResponse := waitForSuccessfulResponse(client, headers, config.clairURL, reportID)
+
+	if successfulResponse == nil {
+		return nil
+	}
+
+	vulnerabilities := fetchVulnerabilities(client, headers, config.clairURL, reportID)
 
 	if vulnerabilities == nil {
 		return nil // exit when no features

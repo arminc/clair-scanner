@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -46,7 +45,7 @@ func listenForSignal(fn func(os.Signal)) {
 
 // createTmpPath creates a temporary folder with a prefix
 func createTmpPath(tmpPrefix string) string {
-	tmpPath, err := ioutil.TempDir("", tmpPrefix)
+	tmpPath, err := os.MkdirTemp("", tmpPrefix)
 	if err != nil {
 		logger.Fatalf("Could not create temporary folder: %s", err)
 	}
@@ -66,7 +65,7 @@ func untar(imageReader io.ReadCloser, target string) error {
 		}
 
 		path := filepath.Join(target, header.Name)
-		if !strings.HasPrefix(path, filepath.Clean(target) + string(os.PathSeparator)) {
+		if !strings.HasPrefix(path, filepath.Clean(target)+string(os.PathSeparator)) {
 			return fmt.Errorf("%s: illegal file path", header.Name)
 		}
 		info := header.FileInfo()
@@ -93,7 +92,7 @@ func untar(imageReader io.ReadCloser, target string) error {
 func parseWhitelistFile(whitelistFile string) vulnerabilitiesWhitelist {
 	whitelistTmp := vulnerabilitiesWhitelist{}
 
-	whitelistBytes, err := ioutil.ReadFile(whitelistFile)
+	whitelistBytes, err := os.ReadFile(whitelistFile)
 	if err != nil {
 		logger.Fatalf("Could not parse whitelist file, could not read file %v", err)
 	}
