@@ -145,7 +145,7 @@ func fetchVulnerabilities(client *http.Client, headers map[string]string, clairU
 
 	if len(report.Vulnerabilities) > 0 {
 		for _, vuln := range report.Vulnerabilities {
-			vuln := vulnerabilityInfo{vuln.Name, vuln.Package.Version, vuln.Name, vuln.Dist.DID + ":" + vuln.Dist.VersionID, vuln.Description, vuln.Links, vuln.Severity, vuln.FixedInVersion}
+			vuln := vulnerabilityInfo{vuln.Name, vuln.Package.Version, vuln.Name, vuln.Dist.DID + ":" + vuln.Dist.VersionID, vuln.Description, vuln.Links, vuln.NormalizedSeverity.String(), vuln.FixedInVersion}
 			vulnerabilities = append(vulnerabilities, vuln)
 		}
 	} else {

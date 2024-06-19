@@ -23,13 +23,12 @@ const (
 
 // Exported var used as mapping on CVE severity name to implied ranking
 var SeverityMap = map[string]int{
-	"Defcon1":    1,
-	"Critical":   2,
-	"High":       3,
-	"Medium":     4,
-	"Low":        5,
-	"Negligible": 6,
-	"Unknown":    7,
+	"Critical":   1,
+	"High":       2,
+	"Medium":     3,
+	"Low":        4,
+	"Negligible": 5,
+	"Unknown":    6,
 }
 
 // listenForSignal listens for interactions and executes the desired code when it happens
