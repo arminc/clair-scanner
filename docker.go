@@ -1,10 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
+	"log"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/docker/docker/client"
@@ -16,20 +22,56 @@ type manifestJSON struct {
 	Layers []string
 }
 
+type newManifestJSON struct {
+	Layers []newManifestJSONDigest `json:"layers"`
+}
+
+type newManifestJSONDigest struct {
+	Digest string `json:"digest"`
+}
+
 // saveDockerImage saves Docker image to temorary folder
 func saveDockerImage(imageName string, tmpPath string) {
 	docker := createDockerClient()
 
-	imageReader, err := docker.ImageSave(context.Background(), []string{imageName})
+	version, err := docker.ServerVersion(context.Background())
 	if err != nil {
-		logger.Fatalf("Could not save Docker image [%s]: %v", imageName, err)
+		logger.Fatalf("Could not find Docker version: %v", err)
 	}
-
-	defer imageReader.Close()
-
-	if err = untar(imageReader, tmpPath); err != nil {
-		logger.Fatalf("Could not save Docker image: could not untar [%s]: %v", imageName, err)
+	majorVersion, err := strconv.Atoi(strings.Split(version.Version, ".")[0])
+	if err != nil {
+		logger.Fatalf("Error while parsing Docker version '%s': %v", version.Version, err)
 	}
+	if majorVersion < 25 {
+		legacy = true
+		imageReader, err := docker.ImageSave(context.Background(), []string{imageName})
+		if err != nil {
+			logger.Fatalf("Could not save Docker image [%s]: %v", imageName, err)
+		}
+		defer imageReader.Close()
+
+		if err = untar(imageReader, tmpPath); err != nil {
+			logger.Fatalf("Could not save Docker image: could not untar [%s]: %v", imageName, err)
+		}
+	} else {
+		updateDockerImage(imageName, tmpPath)
+	}
+}
+
+func updateDockerImage(imageName string, tmpPath string) {
+	logger.Infof("Converting Docker image '%s' in '%s' to legacy format...", imageName, tmpPath)
+	cmd := exec.Command(getEnv("SKOPEO_BIN_PATH", "skopeo"), "copy", "--format", "v2s2", fmt.Sprintf("docker-daemon:%s", imageName), fmt.Sprintf("dir:%s", tmpPath))
+	var outb, errb bytes.Buffer
+	cmd.Stdout = &outb
+	cmd.Stderr = &errb
+
+	if errors.Is(cmd.Err, exec.ErrDot) {
+		cmd.Err = nil
+	}
+	if err := cmd.Run(); err != nil {
+		log.Fatalf("Error running skopeo: %s %s", err, errb.String())
+	}
+	updateLegacyManifestFile(tmpPath)
 }
 
 func createDockerClient() client.APIClient {
@@ -74,4 +116,31 @@ func parseAndValidateManifestFile(manifestFile io.Reader) []manifestJSON {
 		logger.Fatalf("Could not read Docker image layers: no layers can be found")
 	}
 	return manifest
+}
+
+// readManifestFile reads the local manifest.json
+func updateLegacyManifestFile(path string) {
+	manifestFile := path + "/manifest.json"
+	mf, err := os.Open(manifestFile)
+	if err != nil {
+		logger.Fatalf("Could not read Docker image layers: could not open [%s]: %v", manifestFile, err)
+	}
+	defer mf.Close()
+
+	var manifest newManifestJSON
+
+	if err := json.NewDecoder(mf).Decode(&manifest); err != nil {
+		logger.Fatalf("Could not read Docker image layers: manifest.json is not json: %v", err)
+	}
+	mf.Close()
+	var legacyManifest []manifestJSON = []manifestJSON{
+		{
+			Layers: make([]string, len(manifest.Layers)),
+		},
+	}
+	for i, v := range manifest.Layers {
+		legacyManifest[0].Layers[i] = strings.TrimPrefix(v.Digest, "sha256:")
+	}
+	manifestFileContent, _ := json.MarshalIndent(legacyManifest, "", "  ")
+	os.WriteFile(manifestFile, manifestFileContent, 0644)
 }

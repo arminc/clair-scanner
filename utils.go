@@ -66,7 +66,7 @@ func untar(imageReader io.ReadCloser, target string) error {
 		}
 
 		path := filepath.Join(target, header.Name)
-		if !strings.HasPrefix(path, filepath.Clean(target) + string(os.PathSeparator)) {
+		if !strings.HasPrefix(path, filepath.Clean(target)+string(os.PathSeparator)) {
 			return fmt.Errorf("%s: illegal file path", header.Name)
 		}
 		info := header.FileInfo()
@@ -111,4 +111,12 @@ func validateThreshold(threshold string) {
 		}
 	}
 	logger.Fatalf("Invalid CVE severity threshold %s given", threshold)
+}
+
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return defaultValue
+	}
+	return value
 }

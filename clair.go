@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/coreos/clair/api/v1"
+	v1 "github.com/coreos/clair/api/v1"
 )
 
 const (
@@ -28,15 +28,21 @@ type vulnerabilityInfo struct {
 
 // analyzeLayer tells Clair which layers to analyze
 func analyzeLayers(layerIds []string, clairURL string, scannerIP string) {
+	var layerPath string
 	tmpPath := "http://" + scannerIP + ":" + httpPort
 
 	for i := 0; i < len(layerIds); i++ {
+		if legacy {
+			layerPath = tmpPath + "/" + layerIds[i] + "/layer.tar"
+		} else {
+			layerPath = tmpPath + "/" + layerIds[i]
+		}
 		logger.Infof("Analyzing %s", layerIds[i])
 
 		if i > 0 {
-			analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], layerIds[i-1])
+			analyzeLayer(clairURL, layerPath, layerIds[i], layerIds[i-1])
 		} else {
-			analyzeLayer(clairURL, tmpPath+"/"+layerIds[i]+"/layer.tar", layerIds[i], "")
+			analyzeLayer(clairURL, layerPath, layerIds[i], "")
 		}
 	}
 }
