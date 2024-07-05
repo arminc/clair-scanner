@@ -13,6 +13,8 @@ type vulnerabilitiesWhitelist struct {
 
 const tmpPrefix = "clair-scanner-"
 
+var legacy = false
+
 type scannerConfig struct {
 	imageName          string
 	whitelist          vulnerabilitiesWhitelist
