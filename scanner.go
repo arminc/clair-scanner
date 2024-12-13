@@ -33,8 +33,15 @@ func scan(config scannerConfig) []string {
 	tmpPath := createTmpPath(tmpPrefix)
 	defer os.RemoveAll(tmpPath)
 
-	saveDockerImage(config.imageName, tmpPath)
-	payloadJSON, err := LoadDockerManifest(tmpPath, config.scannerIP)
+	dockerClient, err := NewRealDockerClient()
+	if err != nil {
+		log.Fatalf("Error creating Docker client: %v", err)
+	}
+
+	saveDockerImage(dockerClient, config.imageName, tmpPath)
+	fs := RealFileSystem{}
+
+	payloadJSON, err := LoadDockerManifest(tmpPath, config.scannerIP, fs)
 
 	if err != nil {
 		log.Fatalf("Failed to load docker manifest: %s", err)

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/arminc/clair-scanner/pkg/types"
 	"github.com/quay/claircore"
 )
 
@@ -33,7 +34,7 @@ type VulnerabilityReport struct {
 	Vulnerabilities []claircore.Vulnerability `json:"vulnerabilities"` // Ensure this matches the exact JSON key case!
 }
 
-func analyzeContainer(client *http.Client, headers map[string]string, clairURL string, payloadJSON Payload) (string, error) {
+func analyzeContainer(client *http.Client, headers map[string]string, clairURL string, payloadJSON types.Payload) (string, error) {
 
 	payloadBytes, err := json.Marshal(payloadJSON)
 	if err != nil {
