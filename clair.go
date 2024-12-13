@@ -31,10 +31,10 @@ type vulnerabilityInfo struct {
 }
 
 type VulnerabilityReport struct {
-	Vulnerabilities []claircore.Vulnerability `json:"vulnerabilities"` // Ensure this matches the exact JSON key case!
+	Vulnerabilities map[string]claircore.Vulnerability `json:"vulnerabilities"`
 }
 
-func analyzeContainer(client *http.Client, headers map[string]string, clairURL string, payloadJSON types.Payload) (string, error) {
+func analyzeContainer(client HTTPClient, headers map[string]string, clairURL string, payloadJSON types.Payload) (string, error) {
 
 	payloadBytes, err := json.Marshal(payloadJSON)
 	if err != nil {
@@ -79,7 +79,7 @@ func analyzeContainer(client *http.Client, headers map[string]string, clairURL s
 	return string(reportID), nil
 }
 
-func waitForSuccessfulResponse(client *http.Client, headers map[string]string, clairURL, reportID string) *http.Response {
+func waitForSuccessfulResponse(client HTTPClient, headers map[string]string, clairURL, reportID string) *http.Response {
 	maxAttempts := 30
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		time.Sleep(1 * time.Second) // Wait for 1 second before each new attempt
@@ -103,7 +103,7 @@ func waitForSuccessfulResponse(client *http.Client, headers map[string]string, c
 	return nil
 }
 
-func getRequest(client *http.Client, url string, headers map[string]string) (*http.Response, error) {
+func getRequest(client HTTPClient, url string, headers map[string]string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -116,43 +116,64 @@ func getRequest(client *http.Client, url string, headers map[string]string) (*ht
 	return client.Do(req)
 }
 
-func fetchVulnerabilities(client *http.Client, headers map[string]string, clairURL, reportID string) []vulnerabilityInfo {
+func fetchVulnerabilities(client HTTPClient, headers map[string]string, clairURL, reportID string) []vulnerabilityInfo {
+	var vulnerabilities []vulnerabilityInfo
 
-	var vulnerabilities = make([]vulnerabilityInfo, 0)
-
-	vulnerabilityResponse, err := getRequest(client, clairURL+fmt.Sprintf(matcherURI, reportID), headers)
-
+	// Send the request
+	resp, err := getRequest(client, clairURL+fmt.Sprintf(matcherURI, reportID), headers)
 	if err != nil {
-		log.Println("Error during HTTP request:", err)
+		log.Printf("Error during HTTP request: %v", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading response body: %v", err)
 		return nil
 	}
 
-	bodyBytes, err := io.ReadAll(vulnerabilityResponse.Body)
-	if err != nil {
-		log.Println("Error reading response body:", err)
-		return nil
-	}
-	// Reset the response body so it can be read again by json decoder
-	vulnerabilityResponse.Body = io.NopCloser(bytes.NewReader(bodyBytes))
-
-	// fmt.Println("Response Body:", string(bodyBytes))
-
-	// Now decode using the original body content
-	var report claircore.VulnerabilityReport
+	// Decode the JSON into VulnerabilityReport
+	var report VulnerabilityReport
 	if err := json.Unmarshal(bodyBytes, &report); err != nil {
-		log.Println("Error decoding vulnerability report:", err)
+		log.Printf("Error decoding vulnerability report: %v", err)
 		return nil
 	}
 
-	if len(report.Vulnerabilities) > 0 {
-		for _, vuln := range report.Vulnerabilities {
-			vuln := vulnerabilityInfo{vuln.Name, vuln.Package.Version, vuln.Name, vuln.Dist.DID + ":" + vuln.Dist.VersionID, vuln.Description, vuln.Links, vuln.NormalizedSeverity.String(), vuln.FixedInVersion}
-			vulnerabilities = append(vulnerabilities, vuln)
+	// Process vulnerabilities
+	for _, vuln := range report.Vulnerabilities {
+		var featureName, featureVersion, namespace, description, link, severity, fixedBy string
+
+		if vuln.Package != nil {
+			featureName = vuln.Package.Name
+			featureVersion = vuln.Package.Version
 		}
-	} else {
+		if vuln.Dist != nil {
+			namespace = vuln.Dist.DID
+		}
+		description = vuln.Description
+		link = vuln.Links
+		severity = vuln.NormalizedSeverity.String()
+		fixedBy = vuln.FixedInVersion
+
+		// Append to vulnerabilities list
+		vulnerabilities = append(vulnerabilities, vulnerabilityInfo{
+			FeatureName:    featureName,
+			FeatureVersion: featureVersion,
+			Vulnerability:  vuln.Name,
+			Namespace:      namespace,
+			Description:    description,
+			Link:           link,
+			Severity:       severity,
+			FixedBy:        fixedBy,
+		})
+	}
+
+	// Log if no vulnerabilities are found
+	if len(vulnerabilities) == 0 {
 		log.Println("No vulnerabilities found.")
 	}
 
 	return vulnerabilities
-
 }

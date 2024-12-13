@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"net/http"
+
 	cli "github.com/jawher/mow.cli"
 	"github.com/mbndr/logo"
 )
@@ -45,21 +47,31 @@ func main() {
 			log.Fatalf("Application interrupted [%v]", s)
 		})
 
-		result := scan(scannerConfig{
-			*imageName,
-			whitelist,
-			*clair,
-			*ip,
-			*reportFile,
-			*whitelistThreshold,
-			*reportAll,
-			*quiet,
-			*exitWhenNoFeatures,
-		})
-		if result == nil {
-			os.Exit(5)
-		} else if len(result) > 0 {
+		dockerClient, err := NewRealDockerClient()
+		if err != nil {
+			logger.Errorf("Failed to create Docker client: %v", err)
 			os.Exit(1)
+		}
+
+		scanner := NewDefaultScanner(dockerClient, RealFileSystem{}, &http.Client{})
+		config := ScannerConfig{
+			ImageName:          *imageName,
+			Whitelist:          whitelist,
+			ClairURL:           *clair,
+			ScannerIP:          *ip,
+			ReportFile:         *reportFile,
+			WhitelistThreshold: *whitelistThreshold,
+			ReportAll:          *reportAll,
+			Quiet:              *quiet,
+			ExitWhenNoFeatures: *exitWhenNoFeatures,
+		}
+
+		result := scanner.Scan(config)
+
+		if result == nil {
+			os.Exit(5) // Exit when no features found
+		} else if len(result) > 0 {
+			os.Exit(1) // Exit on unapproved vulnerabilities
 		}
 	}
 	app.Run(os.Args)
