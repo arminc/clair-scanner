@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type vulnerabilitiesWhitelist struct {
@@ -64,8 +65,23 @@ func (ds *DefaultScanner) Scan(config ScannerConfig) []string {
 		log.Fatalf("Failed to load docker manifest: %s", err)
 	}
 
-	server := httpFileServer(tmpPath)
-	defer server.Shutdown(context.TODO())
+	// Start the HTTP file server
+	server, err := httpFileServer(tmpPath, logger, func(s *http.Server) error {
+		logger.Infof("Starting HTTP server on %s", s.Addr)
+		return s.ListenAndServe()
+	}, 15*time.Second) // Add the timeout argument here
+	if err != nil {
+		log.Fatalf("Failed to start HTTP file server: %v", err)
+	}
+
+	// Ensure the server is gracefully shut down on exit
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			logger.Errorf("Failed to shut down server gracefully: %v", err)
+		}
+	}()
 
 	headers := map[string]string{
 		"Content-Type": "application/json",
@@ -76,13 +92,20 @@ func (ds *DefaultScanner) Scan(config ScannerConfig) []string {
 		log.Fatalf("Failed to submit container for analysis: %s", err)
 	}
 
-	successfulResponse := waitForSuccessfulResponse(ds.HTTPClient, headers, config.ClairURL, reportID)
-	if successfulResponse == nil {
+	successfulResponse, err := waitForSuccessfulResponse(ds.HTTPClient, headers, config.ClairURL, reportID)
+	if err != nil {
+		log.Printf("Error waiting for successful response: %v", err)
 		return nil
 	}
 
-	vulnerabilities := fetchVulnerabilities(ds.HTTPClient, headers, config.ClairURL, reportID)
-	if vulnerabilities == nil {
+	if successfulResponse.StatusCode != 200 {
+		log.Printf("Unexpected status code: %d", successfulResponse.StatusCode)
+		return nil
+	}
+
+	vulnerabilities, err := fetchVulnerabilities(ds.HTTPClient, headers, config.ClairURL, reportID)
+	if err != nil {
+		log.Printf("Error fetching vulnerabilities: %v", err)
 		return nil
 	}
 

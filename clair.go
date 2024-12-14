@@ -35,114 +35,105 @@ type VulnerabilityReport struct {
 }
 
 func analyzeContainer(client HTTPClient, headers map[string]string, clairURL string, payloadJSON types.Payload) (string, error) {
-
 	payloadBytes, err := json.Marshal(payloadJSON)
 	if err != nil {
-		log.Fatalf("Error marshaling payload: %v", err)
+		return "", fmt.Errorf("error marshaling payload: %w", err)
 	}
 
 	req, err := http.NewRequest("POST", clairURL+indexerURI, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return "", fmt.Errorf("error creating request: %v", err)
+		return "", fmt.Errorf("error creating request: %w", err)
 	}
 
-	// Set headers
 	for key, value := range headers {
 		req.Header.Set(key, value)
 	}
 
-	// Create an HTTP client and send the request
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("error sending request to server: %v", err)
+		return "", fmt.Errorf("error sending request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Read and log the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("error reading response body: %v", err)
+		return "", fmt.Errorf("error reading response: %w", err)
 	}
 
-	// Parse JSON response to extract the report_id
-	var responseMap map[string]interface{}
-	if err := json.Unmarshal(body, &responseMap); err != nil {
-		return "", fmt.Errorf("error parsing JSON response: %v", err)
+	reportID, err := parseReportID(body)
+	if err != nil {
+		return "", fmt.Errorf("error parsing report ID: %w", err)
 	}
 
-	// Extract the report_id assuming it's called "manifest_hash"
-	reportID, ok := responseMap["manifest_hash"].(string)
-	if !ok {
-		return "", fmt.Errorf("manifest_hash not found in the response")
-	}
-
-	return string(reportID), nil
+	return reportID, nil
 }
 
-func waitForSuccessfulResponse(client HTTPClient, headers map[string]string, clairURL, reportID string) *http.Response {
-	maxAttempts := 30
-	for attempt := 0; attempt < maxAttempts; attempt++ {
-		time.Sleep(1 * time.Second) // Wait for 1 second before each new attempt
+func waitForSuccessfulResponse(client HTTPClient, headers map[string]string, clairURL, reportID string) (*http.Response, error) {
+	for attempt := 0; attempt < 30; attempt++ {
+		time.Sleep(1 * time.Second)
 
-		response, err := getRequest(client, clairURL+fmt.Sprintf(reportURI, reportID), headers)
+		resp, err := getRequest(client, clairURL+fmt.Sprintf(reportURI, reportID), headers)
 		if err != nil {
-			log.Println("Error during HTTP request:", err)
+			log.Printf("Error during HTTP request: %v", err)
 			continue
 		}
 
-		if response.StatusCode == 200 {
-			return response
-		} else if response.StatusCode == 404 {
+		if resp.StatusCode == 200 {
+			return resp, nil
+		} else if resp.StatusCode == 404 {
 			log.Println("Index report not yet complete, retrying...")
 		} else {
-			log.Printf("Failed to retrieve index report. Status code: %d\n", response.StatusCode)
-			break
+			return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
 	}
-	log.Println("Index report did not complete in the expected time.")
-	return nil
+	return nil, fmt.Errorf("index report did not complete in expected time")
 }
 
-func getRequest(client HTTPClient, url string, headers map[string]string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	for key, value := range headers {
-		req.Header.Set(key, value)
-	}
-
-	return client.Do(req)
-}
-
-func fetchVulnerabilities(client HTTPClient, headers map[string]string, clairURL, reportID string) []vulnerabilityInfo {
-	var vulnerabilities []vulnerabilityInfo
-
-	// Send the request
+func fetchVulnerabilities(client HTTPClient, headers map[string]string, clairURL, reportID string) ([]vulnerabilityInfo, error) {
 	resp, err := getRequest(client, clairURL+fmt.Sprintf(matcherURI, reportID), headers)
 	if err != nil {
-		log.Printf("Error during HTTP request: %v", err)
-		return nil
+		return nil, fmt.Errorf("error sending request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Read the response body
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Error reading response body: %v", err)
-		return nil
+		return nil, fmt.Errorf("error reading response body: %w", err)
 	}
 
-	// Decode the JSON into VulnerabilityReport
+	vulnerabilities, err := parseVulnerabilityReport(bodyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding vulnerability report: %w", err)
+	}
+
+	return vulnerabilities, nil
+}
+
+// Helper to parse JSON for report ID
+func parseReportID(data []byte) (string, error) {
+	var response map[string]interface{}
+	if err := json.Unmarshal(data, &response); err != nil {
+		return "", fmt.Errorf("error unmarshaling report ID: %w", err)
+	}
+
+	reportID, ok := response["manifest_hash"].(string)
+	if !ok {
+		return "", fmt.Errorf("manifest_hash not found in response")
+	}
+
+	return reportID, nil
+}
+
+// Helper to parse vulnerability report
+func parseVulnerabilityReport(data []byte) ([]vulnerabilityInfo, error) {
 	var report VulnerabilityReport
-	if err := json.Unmarshal(bodyBytes, &report); err != nil {
-		log.Printf("Error decoding vulnerability report: %v", err)
-		return nil
+	if err := json.Unmarshal(data, &report); err != nil {
+		return nil, fmt.Errorf("error unmarshaling vulnerability report: %w", err)
 	}
 
-	// Process vulnerabilities
+	var vulnerabilities []vulnerabilityInfo
 	for _, vuln := range report.Vulnerabilities {
+		// Safely handle fields that may be nil
 		var featureName, featureVersion, namespace, description, link, severity, fixedBy string
 
 		if vuln.Package != nil {
@@ -170,10 +161,23 @@ func fetchVulnerabilities(client HTTPClient, headers map[string]string, clairURL
 		})
 	}
 
-	// Log if no vulnerabilities are found
-	if len(vulnerabilities) == 0 {
-		log.Println("No vulnerabilities found.")
+	return vulnerabilities, nil
+}
+
+func getRequest(client HTTPClient, url string, headers map[string]string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating GET request: %w", err)
 	}
 
-	return vulnerabilities
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error executing GET request: %w", err)
+	}
+
+	return resp, nil
 }
