@@ -118,7 +118,7 @@ func LoadDockerManifest(folderPath string, scannerIP string, fs FileSystem) (*ty
 
 		layerURI := types.LayerURI{
 			Hash: layer.Digest,
-			URI:  fmt.Sprintf("http://%s:%s/blobs/sha256/%s", scannerIP, "80", layerDigest),
+			URI:  fmt.Sprintf("http://%s:%s/blobs/sha256/%s", scannerIP, "9279", layerDigest),
 		}
 		layers = append(layers, layerURI)
 	}
