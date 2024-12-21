@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"io"
 	"sort"
 
 	"github.com/mbndr/logo"
@@ -18,7 +18,7 @@ type vulnerabilityReport struct {
 
 func sortBySeverity(vulnerabilities []vulnerabilityInfo) {
 	sort.Slice(vulnerabilities, func(i, j int) bool {
-		return SeverityMap[vulnerabilities[i].Severity] < SeverityMap[vulnerabilities[j].Severity]
+		return SeverityMap[vulnerabilities[i].Severity] > SeverityMap[vulnerabilities[j].Severity]
 	})
 }
 
@@ -49,9 +49,9 @@ func formatTableData(vulnerabilities []vulnerabilityInfo, unapproved []string) [
 	return formatted
 }
 
-func printTable(vulnerabilities []vulnerabilityInfo, unapproved []string) {
+func printTable(writer io.Writer, vulnerabilities []vulnerabilityInfo, unapproved []string) {
 	header := []string{"Status", "CVE Severity", "Package Name", "Package Version", "CVE Description"}
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(writer)
 	table.SetHeader(header)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetRowSeparator("-")
@@ -77,7 +77,7 @@ func filterApproved(vulnerabilities []vulnerabilityInfo, unapproved []string, re
 	return vulns
 }
 
-func reportToConsole(logger *logo.Logger, imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, reportAll bool, quiet bool) {
+func reportToConsole(logger *logo.Logger, writer io.Writer, imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, reportAll bool, quiet bool) {
 	if quiet {
 		return
 	}
@@ -90,11 +90,11 @@ func reportToConsole(logger *logo.Logger, imageName string, vulnerabilities []vu
 
 		if len(unapproved) > 0 {
 			logger.Errorf("Image [%s] contains %d unapproved vulnerabilities", imageName, len(unapproved))
-			printTable(vulnerabilities, unapproved)
+			printTable(writer, vulnerabilities, unapproved)
 		} else {
 			logger.Infof("Image [%s] contains NO unapproved vulnerabilities", imageName)
 			if reportAll {
-				printTable(vulnerabilities, unapproved)
+				printTable(writer, vulnerabilities, unapproved)
 			}
 		}
 	} else {
@@ -102,10 +102,9 @@ func reportToConsole(logger *logo.Logger, imageName string, vulnerabilities []vu
 	}
 }
 
-// reportToFile writes the report to file
-func reportToFile(logger *logo.Logger, imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, file string) {
+func reportToFile(imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, file string) ([]byte, error) {
 	if file == "" {
-		return
+		return nil, nil
 	}
 	report := &vulnerabilityReport{
 		Image:           imageName,
@@ -114,9 +113,7 @@ func reportToFile(logger *logo.Logger, imageName string, vulnerabilities []vulne
 	}
 	reportJSON, err := json.MarshalIndent(report, "", "    ")
 	if err != nil {
-		logger.Fatalf("Could not create a report: report is not proper JSON %v", err)
+		return nil, fmt.Errorf("could not create a report: report is not proper JSON %v", err)
 	}
-	if err = os.WriteFile(file, reportJSON, 0644); err != nil {
-		logger.Fatalf("Could not create a report: could not write to file %v", err)
-	}
+	return reportJSON, nil
 }

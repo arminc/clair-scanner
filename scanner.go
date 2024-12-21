@@ -107,8 +107,18 @@ func (ds *DefaultScanner) Scan(logger *logo.Logger, config ScannerConfig) []stri
 	}
 
 	unapproved := checkForUnapprovedVulnerabilities(config.ImageName, vulnerabilities, config.Whitelist, config.WhitelistThreshold)
-	reportToConsole(logger, config.ImageName, vulnerabilities, unapproved, config.ReportAll, config.Quiet)
-	reportToFile(logger, config.ImageName, vulnerabilities, unapproved, config.ReportFile)
+
+	// Pass os.Stdout as the writer for console output
+	reportToConsole(logger, os.Stdout, config.ImageName, vulnerabilities, unapproved, config.ReportAll, config.Quiet)
+
+	// Generate JSON report and write to file if necessary
+	if jsonData, err := reportToFile(config.ImageName, vulnerabilities, unapproved, config.ReportFile); err == nil && jsonData != nil {
+		if err := os.WriteFile(config.ReportFile, jsonData, 0644); err != nil {
+			logger.Errorf("Failed to write report to file: %v", err)
+		}
+	} else if err != nil {
+		logger.Errorf("Failed to generate JSON report: %v", err)
+	}
 
 	return unapproved
 }
