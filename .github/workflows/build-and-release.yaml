@@ -1,0 +1,98 @@
+name: Build, Test, and Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+-prerelease-[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+' # Trigger on semantic version tags (e.g., v1.0.0)
+
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Go
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22
+
+      # Step 3: Run Go tests
+      - name: Run Go tests
+        run: |
+          go test ./... -v
+
+      # Step 4: Build the Go app for each platform
+      - name: Build for ${{ matrix.goos }}-${{ matrix.goarch }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p dist
+          output_name=clair-scanner_${GOOS}-${GOARCH}
+          [ "$GOOS" = "windows" ] && output_name+=".exe"
+          go build -o dist/$output_name
+
+      # Step 5: Upload binaries as artifacts for inspection
+      - name: Upload binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: clair-scanner_${{ matrix.goos }}_${{ matrix.goarch }}
+          path: dist/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Download build artifacts
+      - name: Download binaries
+        uses: actions/download-artifact@v3
+        with:
+          path: dist/
+
+      - name: Determine if Prerelease
+        id: prerelease-check
+        run: |
+          if [[ "${GITHUB_REF_NAME}" =~ -prerelease-[0-9]+$ ]]; then
+            echo "is_prerelease=true" >> $GITHUB_ENV
+          else
+            echo "is_prerelease=false" >> $GITHUB_ENV
+          fi
+
+      # Step 3: Create GitHub Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            Automated release for ${{ github.ref_name }}.
+          draft: false
+          prerelease: ${{ env.is_prerelease }}
+
+      # Step 4: Upload binaries to the release
+      - name: Upload Release Assets
+        run: |
+          pwd
+          ls -alh dist/
+          find dist/ -type f -print0 | while IFS= read -r -d '' file; do
+            echo "Uploading: $file"
+            gh release upload "${{ github.ref_name }}" "$file"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
