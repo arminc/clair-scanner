@@ -11,44 +11,6 @@ import (
 	"time"
 )
 
-// MockDockerClient is a mock implementation of DockerClient
-type MockDockerClient struct {
-	ImageSaveFunc func(ctx context.Context, imageIDs []string) (io.ReadCloser, error)
-}
-
-func (m *MockDockerClient) ImageSave(ctx context.Context, imageIDs []string) (io.ReadCloser, error) {
-	return m.ImageSaveFunc(ctx, imageIDs)
-}
-
-// MockFileSystem is a mock implementation of FileSystem
-// MockFileSystem is a mock implementation of FileSystem
-type MockFileSystem struct {
-	ReadFileFunc func(name string) ([]byte, error)
-	StatFunc     func(name string) (os.FileInfo, error)
-	OpenFunc     func(name string) (*os.File, error)
-}
-
-func (fs MockFileSystem) ReadFile(name string) ([]byte, error) {
-	if fs.ReadFileFunc != nil {
-		return fs.ReadFileFunc(name)
-	}
-	return nil, errors.New("ReadFile not implemented")
-}
-
-func (fs MockFileSystem) Stat(name string) (os.FileInfo, error) {
-	if fs.StatFunc != nil {
-		return fs.StatFunc(name)
-	}
-	return nil, errors.New("Stat not implemented")
-}
-
-func (fs MockFileSystem) Open(name string) (*os.File, error) {
-	if fs.OpenFunc != nil {
-		return fs.OpenFunc(name)
-	}
-	return nil, errors.New("Open not implemented")
-}
-
 func TestSaveDockerImage_Success(t *testing.T) {
 	// Create a mock tarball with valid format
 	tarData := new(bytes.Buffer)

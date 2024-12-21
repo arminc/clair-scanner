@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/mbndr/logo"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -76,7 +77,7 @@ func filterApproved(vulnerabilities []vulnerabilityInfo, unapproved []string, re
 	return vulns
 }
 
-func reportToConsole(imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, reportAll bool, quiet bool) {
+func reportToConsole(logger *logo.Logger, imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, reportAll bool, quiet bool) {
 	if quiet {
 		return
 	}
@@ -102,7 +103,7 @@ func reportToConsole(imageName string, vulnerabilities []vulnerabilityInfo, unap
 }
 
 // reportToFile writes the report to file
-func reportToFile(imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, file string) {
+func reportToFile(logger *logo.Logger, imageName string, vulnerabilities []vulnerabilityInfo, unapproved []string, file string) {
 	if file == "" {
 		return
 	}

@@ -7,12 +7,9 @@ import (
 	"os"
 	"strings"
 	"time"
-)
 
-type vulnerabilitiesWhitelist struct {
-	GeneralWhitelist map[string]string            //[key: CVE and value: CVE description]
-	Images           map[string]map[string]string // image name with [key: CVE and value: CVE description]
-}
+	"github.com/mbndr/logo"
+)
 
 const tmpPrefix = "clair-scanner-"
 
@@ -51,8 +48,8 @@ func NewDefaultScanner(dockerClient DockerClient, fileSystem FileSystem, httpCli
 	}
 }
 
-func (ds *DefaultScanner) Scan(config ScannerConfig) []string {
-	tmpPath := createTmpPath(tmpPrefix)
+func (ds *DefaultScanner) Scan(logger *logo.Logger, config ScannerConfig) []string {
+	tmpPath := createTmpPath(logger, tmpPrefix)
 	defer os.RemoveAll(tmpPath)
 
 	err := saveDockerImage(ds.DockerClient, config.ImageName, tmpPath)
@@ -110,8 +107,8 @@ func (ds *DefaultScanner) Scan(config ScannerConfig) []string {
 	}
 
 	unapproved := checkForUnapprovedVulnerabilities(config.ImageName, vulnerabilities, config.Whitelist, config.WhitelistThreshold)
-	reportToConsole(config.ImageName, vulnerabilities, unapproved, config.ReportAll, config.Quiet)
-	reportToFile(config.ImageName, vulnerabilities, unapproved, config.ReportFile)
+	reportToConsole(logger, config.ImageName, vulnerabilities, unapproved, config.ReportAll, config.Quiet)
+	reportToFile(logger, config.ImageName, vulnerabilities, unapproved, config.ReportFile)
 
 	return unapproved
 }

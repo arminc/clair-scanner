@@ -15,18 +15,6 @@ import (
 	"github.com/mbndr/logo"
 )
 
-// MockHTTPClient mocks the HTTPClient interface for testing
-type MockHTTPClient struct {
-	DoFunc func(req *http.Request) (*http.Response, error)
-}
-
-func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	if m.DoFunc != nil {
-		return m.DoFunc(req)
-	}
-	return nil, errors.New("DoFunc not implemented")
-}
-
 // createMockTar creates a valid tar archive for testing
 func createMockTar() ([]byte, error) {
 	// Create an in-memory tar archive
@@ -58,7 +46,7 @@ func createMockTar() ([]byte, error) {
 }
 
 func TestScan(t *testing.T) {
-	logger = logo.NewLogger(logo.NewReceiver(os.Stdout, ""))
+	logger := logo.NewLogger(logo.NewReceiver(os.Stdout, ""))
 	dockerClient := &MockDockerClient{
 		ImageSaveFunc: func(ctx context.Context, imageIDs []string) (io.ReadCloser, error) {
 			// Generate a valid tar archive
@@ -144,7 +132,7 @@ func TestScan(t *testing.T) {
 		ExitWhenNoFeatures: false,
 	}
 
-	unapproved := scanner.Scan(config)
+	unapproved := scanner.Scan(logger, config)
 
 	if len(unapproved) > 0 {
 		t.Errorf("Expected no unapproved vulnerabilities, got %v", unapproved)

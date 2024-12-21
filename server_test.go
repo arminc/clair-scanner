@@ -10,20 +10,6 @@ import (
 	"time"
 )
 
-// MockLogger is a mock implementation of the Logger interface for testing.
-type MockLogger struct {
-	infoMessages  []string
-	errorMessages []string
-}
-
-func (m *MockLogger) Infof(format string, args ...interface{}) {
-	m.infoMessages = append(m.infoMessages, format)
-}
-
-func (m *MockLogger) Errorf(format string, args ...interface{}) {
-	m.errorMessages = append(m.errorMessages, format)
-}
-
 func TestHttpFileServer(t *testing.T) {
 	t.Run("starts server successfully", func(t *testing.T) {
 		mockLogger := &MockLogger{}

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/mbndr/logo"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -43,7 +44,7 @@ func listenForSignal(fn func(os.Signal)) {
 }
 
 // createTmpPath creates a temporary folder with a prefix
-func createTmpPath(tmpPrefix string) string {
+func createTmpPath(logger *logo.Logger, tmpPrefix string) string {
 	tmpPath, err := os.MkdirTemp("", tmpPrefix)
 	if err != nil {
 		logger.Fatalf("Could not create temporary folder: %s", err)
@@ -88,7 +89,7 @@ func untar(imageReader io.ReadCloser, target string) error {
 }
 
 // parseWhitelistFile reads the whitelist file and parses it
-func parseWhitelistFile(whitelistFile string) vulnerabilitiesWhitelist {
+func parseWhitelistFile(logger *logo.Logger, whitelistFile string) vulnerabilitiesWhitelist {
 	whitelistTmp := vulnerabilitiesWhitelist{}
 
 	whitelistBytes, err := os.ReadFile(whitelistFile)
@@ -102,7 +103,7 @@ func parseWhitelistFile(whitelistFile string) vulnerabilitiesWhitelist {
 }
 
 // Validate that the given CVE severity threshold is a valid severity
-func validateThreshold(threshold string) {
+func validateThreshold(logger *logo.Logger, threshold string) {
 	for severity := range SeverityMap {
 		if threshold == severity {
 			return

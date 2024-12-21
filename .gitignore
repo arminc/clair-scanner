@@ -4,3 +4,4 @@ clair-scanner
 dist
 clair_report.json
 clair-scanner_*
+report.txt
