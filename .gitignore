@@ -2,3 +2,6 @@ vendor
 clair-scanner
 *.out
 dist
+clair_report.json
+clair-scanner_*
+report.txt

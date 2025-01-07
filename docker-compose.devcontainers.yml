@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: arminc/clair-db-v4
+    container_name: postgres
+    ports:
+      - "5432:5432" # Expose the default PostgreSQL port
+    environment:
+      POSTGRES_USER: clair
+      POSTGRES_PASSWORD: clair
+      POSTGRES_DB: clair
+    restart: unless-stopped
+
+  clair-local-scan:
+    image: arminc/clair-local-scan-v4
+    container_name: clair-local-scan
+    ports:
+      - "8080:8080" # Expose clair-local-scan port
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  clair-scanner:
+    container_name: clair-scanner
+    build:
+      context: .
+      dockerfile: ./.devcontainer/Dockerfile.devcontainer
+    volumes:
+      - ./:/workspaces/clair-scanner
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: sleep infinity
+    network_mode: service:clair-local-scan
+    depends_on:
+      - clair-local-scan
+    restart: always

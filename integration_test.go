@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package main
@@ -21,9 +22,9 @@ func TestMain(m *testing.M) {
 func TestDebian(t *testing.T) {
 	initializeLogger("")
 	unapproved := scan(scannerConfig{
-		"debian:jessie",
+		"debian:bookworm",
 		vulnerabilitiesWhitelist{},
-		"http://127.0.0.1:6060",
+		"http://127.0.0.1:8080",
 		*ip,
 		"",
 		"Unknown",

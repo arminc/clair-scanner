@@ -10,12 +10,15 @@ build:
 installLocal:
 	CGO_ENABLED=0 go install
 
-docker:
-	@cd docker && \
-		docker build -t golang-cross-compile .
-
-cross: docker
-	docker run -ti --rm -e CGO_ENABLED=0 -v $(CURDIR):/gopath/src/clair-scanner -w /gopath/src/clair-scanner golang-cross-compile gox -osarch="darwin/amd64 darwin/386 linux/amd64 linux/386 windows/amd64 windows/386" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+cross:
+	@archs="linux/386 linux/amd64 linux/arm linux/arm64 darwin/amd64 darwin/arm64"; \
+	for arch in $$archs; do \
+		GOOS=$$(echo $$arch | cut -d'/' -f1); \
+		GOARCH=$$(echo $$arch | cut -d'/' -f2); \
+		echo "Building for $$GOOS/$$GOARCH"; \
+		CMD="GOOS=$$GOOS GOARCH=$$GOARCH go build -o clair-scanner_$${GOOS}_$${GOARCH}"; \
+		eval $$CMD; \
+	done
 
 clean:
 	rm -rf dist
@@ -30,8 +33,8 @@ test:
 	go test
 
 pull:
-	docker pull alpine:3.5
-	docker pull debian:jessie
+	docker pull alpine:3.20
+	docker pull debian:bookworm
 
 db:
 	docker run -p 5432:5432 -d --name db arminc/clair-db:latest
@@ -41,10 +44,12 @@ clair:
 	docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:latest
 	@sleep 5
 
-integration: pull db clair
-	go test -v -covermode=count -coverprofile=coverage.out -ip $(shell ipconfig getifaddr en0) -tags integration
+#integration: pull db clair
+integration:
+	go test -v -covermode=count -coverprofile=coverage.out -ip 127.0.0.1 -tags integration
 
-integrationlinux: pull db clair
-	go test -v -covermode=count -coverprofile=coverage.out -ip $(shell ifconfig docker0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1) -tags integration
+#integrationlinux: pull db clair
+integration:
+	go test -v -covermode=count -coverprofile=coverage.out -ip 127.0.0.1 -tags integration
 
 release: integrationlinux build cross

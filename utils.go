@@ -4,13 +4,13 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
 	"syscall"
 
+	"github.com/mbndr/logo"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -24,13 +24,12 @@ const (
 
 // Exported var used as mapping on CVE severity name to implied ranking
 var SeverityMap = map[string]int{
-	"Defcon1":    1,
-	"Critical":   2,
-	"High":       3,
-	"Medium":     4,
-	"Low":        5,
-	"Negligible": 6,
-	"Unknown":    7,
+	"Critical":   1,
+	"High":       2,
+	"Medium":     3,
+	"Low":        4,
+	"Negligible": 5,
+	"Unknown":    6,
 }
 
 // listenForSignal listens for interactions and executes the desired code when it happens
@@ -45,8 +44,8 @@ func listenForSignal(fn func(os.Signal)) {
 }
 
 // createTmpPath creates a temporary folder with a prefix
-func createTmpPath(tmpPrefix string) string {
-	tmpPath, err := ioutil.TempDir("", tmpPrefix)
+func createTmpPath(logger *logo.Logger, tmpPrefix string) string {
+	tmpPath, err := os.MkdirTemp("", tmpPrefix)
 	if err != nil {
 		logger.Fatalf("Could not create temporary folder: %s", err)
 	}
@@ -66,7 +65,7 @@ func untar(imageReader io.ReadCloser, target string) error {
 		}
 
 		path := filepath.Join(target, header.Name)
-		if !strings.HasPrefix(path, filepath.Clean(target) + string(os.PathSeparator)) {
+		if !strings.HasPrefix(path, filepath.Clean(target)+string(os.PathSeparator)) {
 			return fmt.Errorf("%s: illegal file path", header.Name)
 		}
 		info := header.FileInfo()
@@ -90,10 +89,10 @@ func untar(imageReader io.ReadCloser, target string) error {
 }
 
 // parseWhitelistFile reads the whitelist file and parses it
-func parseWhitelistFile(whitelistFile string) vulnerabilitiesWhitelist {
+func parseWhitelistFile(logger *logo.Logger, whitelistFile string) vulnerabilitiesWhitelist {
 	whitelistTmp := vulnerabilitiesWhitelist{}
 
-	whitelistBytes, err := ioutil.ReadFile(whitelistFile)
+	whitelistBytes, err := os.ReadFile(whitelistFile)
 	if err != nil {
 		logger.Fatalf("Could not parse whitelist file, could not read file %v", err)
 	}
@@ -104,7 +103,7 @@ func parseWhitelistFile(whitelistFile string) vulnerabilitiesWhitelist {
 }
 
 // Validate that the given CVE severity threshold is a valid severity
-func validateThreshold(threshold string) {
+func validateThreshold(logger *logo.Logger, threshold string) {
 	for severity := range SeverityMap {
 		if threshold == severity {
 			return
