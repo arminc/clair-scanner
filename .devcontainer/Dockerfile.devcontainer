@@ -1,5 +1,5 @@
 # Use a Go development container as the base image
-FROM mcr.microsoft.com/devcontainers/go:1-1.23-bookworm
+FROM golang:1.24-bookworm
 
 # Install Docker dependencies and tools
 RUN apt-get update && \

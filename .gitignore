@@ -5,3 +5,4 @@ dist
 clair_report.json
 clair-scanner_*
 report.txt
+__debug_bin*
