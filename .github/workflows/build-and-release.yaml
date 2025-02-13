@@ -44,7 +44,7 @@ jobs:
 
       # Step 5: Upload binaries as artifacts for inspection
       - name: Upload binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: clair-scanner_${{ matrix.goos }}_${{ matrix.goarch }}
           path: dist/
